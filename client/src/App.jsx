@@ -14,9 +14,9 @@ import Profile from "./auth/Profile.jsx";
 
 import AdminRoute from "./routes/AdminRoute.jsx";
 
-// ⬇️ Provizore: krijo këto dy skedarë minimalë ose zëvendëso me faqet e tua reale
 import DoctorDashboard from "./pages/DoctorDashboard.jsx";
 import PatientDashboard from "./pages/PatientDashboard.jsx";
+import SearchPage from "./pages/SearchPage.jsx";
 
 function Forbidden() {
   return <div style={{ padding: 24 }}><h2>403 - Forbidden</h2></div>;
@@ -36,6 +36,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/search" element={<SearchPage />} />
 
         {/* ADMIN */}
         <Route
@@ -49,11 +50,11 @@ export default function App() {
         {/* ⬇️ alias që të mos marrësh 404 te /admin */}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
 
-        {/* DOCTOR (pa guard për momentin, vetëm që të hapet) */}
+        {/* DOCTOR */}
         <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
         <Route path="/doctor" element={<Navigate to="/doctor/dashboard" replace />} />
 
-        {/* PATIENT (pa guard për momentin) */}
+        {/* PATIENT */}
         <Route path="/patient/dashboard" element={<PatientDashboard />} />
         <Route path="/patient" element={<Navigate to="/patient/dashboard" replace />} />
 

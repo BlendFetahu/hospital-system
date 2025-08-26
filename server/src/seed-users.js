@@ -1,6 +1,10 @@
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 const bcrypt = require("bcryptjs");
 const { pool } = require("./db");
+
+
+
 
 (async ()=>{
   const pwd = bcrypt.hashSync("123456",10);
@@ -17,7 +21,7 @@ const { pool } = require("./db");
   const patId   = await ensureUser("patient@test.com","PATIENT");
 
   const [d] = await pool.query("SELECT id FROM doctors WHERE user_id=?",[docId]);
-  if(!d.length) await pool.query("INSERT INTO doctors (user_id,name,specialty) VALUES (?,?,?)",[docId,"Dr. Demo","General"]);
+  if(!d.length) await pool.query("INSERT INTO doctors (user_id,name,specialty,city) VALUES (?,?,?)",[docId,"Dr. Demo","General","Prishtine"]);
 
   const [p] = await pool.query("SELECT id FROM patients WHERE user_id=?",[patId]);
   if(!p.length) await pool.query("INSERT INTO patients (user_id,name) VALUES (?,?)",[patId,"Patient Demo"]);

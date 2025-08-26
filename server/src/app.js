@@ -8,7 +8,7 @@ const patients = require("./routes/patients");
 
 const app = express();
 app.use(cors({
-  origin: "http://localhost:5173",   // ⬅️ URL e klientit tënd (Vite)
+  origin: true,   // ⬅️ URL e klientit tënd (Vite)
   credentials: false,                // përdorim Authorization header, jo cookies
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
@@ -25,3 +25,4 @@ app.get("/doctor/ping", requireAuth, requireRole("DOCTOR"), (_req,res)=>res.json
 app.get("/patient/ping",requireAuth, requireRole("PATIENT"),(_req,res)=>res.json({ok:true}));
 
 module.exports = app;
+

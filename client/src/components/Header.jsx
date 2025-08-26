@@ -1,21 +1,50 @@
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 export default function Header() {
   return (
-    <header style={{borderBottom:"1px solid #eee"}}>
-      <div style={{
-        maxWidth:1100, margin:"0 auto", padding:"12px 16px",
-        display:"flex", alignItems:"center", justifyContent:"space-between"
-      }}>
-        <strong style={{fontSize:20}}>Hospital System</strong>
-        <nav style={{display:"flex", gap:16, fontSize:14}}>
-          <a href="#features">Features</a>
-          <a href="#contact">Contact</a>
-          <Link to="/login"  style={{padding:"6px 10px", border:"1px solid #ddd", borderRadius:6}}>Login</Link>
-          <Link to="/signup" style={{padding:"6px 10px", border:"1px solid #ddd", borderRadius:6}}>Signup</Link>
+    // sticky => nuk mbulon përmbajtjen; zgjidh overlapp-in që pate në Register
+    <header className="sticky top-0 z-50 bg-transparent">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <nav className="my-4 flex items-center justify-between rounded-full bg-white px-4 py-2 ring-1 ring-slate-200 shadow-sm">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-md bg-sky-600" />
+            <span className="font-semibold text-slate-800">Hospital System</span>
+          </Link>
+
+          {/* Menu */}
+          <ul className="hidden md:flex items-center gap-6 text-sm text-slate-600">
+            {[
+              ["Home", "/"],
+              ["Appointment", "/#appointment"],
+              ["Services", "/#services"],
+              ["About us", "/#about"],
+            ].map(([label, to]) => (
+              <li key={label}>
+                <NavLink to={to} className="hover:text-slate-900">
+                  {label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+
+          {/* Auth */}
+          <div className="flex items-center gap-2">
+            <Link
+              to="/login"
+              className="rounded-full px-4 py-2 text-sm text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+            >
+              Sign in
+            </Link>
+            <Link
+              to="/signup"
+              className="rounded-full bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
+            >
+              Register
+            </Link>
+          </div>
         </nav>
       </div>
     </header>
   );
 }
-
