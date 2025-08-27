@@ -1,5 +1,7 @@
 import HeroSearchBar from "../components/search/HeroSearchBar";
 import WhyChooseUs from "../components/LandingPage/WhyChooseUs";
+import OurServices from "../components/LandingPage/OurServices";
+import Slider from "../components/LandingPage/Slider";
 
 export default function Landing() {
   return (
@@ -16,6 +18,17 @@ export default function Landing() {
      {/* Why Choose Us */}
       <section className="bg-white text-slate-900">
         <WhyChooseUs />
+      </section>
+
+      {/* Our Services */}
+      <section>
+        <OurServices />
+      </section>
+
+
+      {/* Slider */}
+      <section className="py-10 bg-gradient-to-br from-emerald-400 via-teal-500 to-emerald-700">
+        <Slider />
       </section>
     </main>
     
