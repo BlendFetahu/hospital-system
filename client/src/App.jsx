@@ -1,7 +1,7 @@
 // client/src/App.jsx
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
+import ProtectedRoute from "./routes/ProtectedRoute.jsx"; 
 import Header from "./components/Header.jsx";
 import Footer from "./components/Footer.jsx";
 
@@ -55,8 +55,12 @@ export default function App() {
         <Route path="/doctor" element={<Navigate to="/doctor/dashboard" replace />} />
 
         {/* PATIENT */}
-        <Route path="/patient/dashboard" element={<PatientDashboard />} />
-        <Route path="/patient" element={<Navigate to="/patient/dashboard" replace />} />
+       
+
+<Route element={<ProtectedRoute allowed={["PATIENT"]} />}>
+  <Route path="/patient/dashboard" element={<PatientDashboard />} />
+  <Route path="/patient" element={<Navigate to="/patient/dashboard" replace />} />
+</Route>
 
         {/* Error/NotFound */}
         <Route path="/403" element={<Forbidden />} />
