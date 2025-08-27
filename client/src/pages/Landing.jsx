@@ -1,4 +1,5 @@
 import HeroSearchBar from "../components/search/HeroSearchBar";
+import WhyChooseUs from "../components/LandingPage/WhyChooseUs";
 
 export default function Landing() {
   return (
@@ -10,6 +11,13 @@ export default function Landing() {
           <HeroSearchBar />
         </div>
       </section>
+
+
+     {/* Why Choose Us */}
+      <section className="bg-white text-slate-900">
+        <WhyChooseUs />
+      </section>
     </main>
+    
   );
 }

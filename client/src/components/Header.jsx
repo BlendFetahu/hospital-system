@@ -6,11 +6,26 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-transparent">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <nav className="my-4 flex items-center justify-between rounded-full bg-white px-4 py-2 ring-1 ring-slate-200 shadow-sm">
-          {/* Logo */}
+           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-md bg-sky-600" />
-            <span className="font-semibold text-slate-800">Hospital System</span>
+            <div className="w-9 h-9 rounded-full bg-gradient-to-r from-blue-600 to-teal-500 shadow flex items-center justify-center">
+              <svg
+                className="w-5 h-5 text-white"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="4 12 8 12 10 7 14 17 16 12 20 12" />
+              </svg>
+            </div>
+            <span className="font-semibold text-slate-800">
+              Hospital System
+            </span>
           </Link>
+          
 
           {/* Menu */}
           <ul className="hidden md:flex items-center gap-6 text-sm text-slate-600">
