@@ -9,28 +9,37 @@ const r = express.Router();
 /* ---------------------- PUBLIC SEARCH (no auth) ---------------------- */
 // GET /doctors/search?specialty=...&city=...
 // kthen { items: [ { id, email, role, name, specialty, city } ] } me max 1 rekord
+// GET /doctors/search?specialty=...  (PUBLIC)
 r.get("/search", async (req, res) => {
-  const specialty = String(req.query.specialty || "").trim().toLowerCase();
-  const city      = String(req.query.city || "").trim().toLowerCase();
+  try {
+    const specialty = String(req.query.specialty || "").trim().toLowerCase();
 
-  const where = [];
-  const args  = [];
+    const where = [];
+    const args  = [];
 
-  if (specialty) { where.push("LOWER(d.specialty) = ?"); args.push(specialty); }
-  if (city)      { where.push("LOWER(d.city) = ?");      args.push(city); }
+    if (specialty) {
+      // lejo partial match: "cardio" -> "Cardiology"
+      where.push("LOWER(d.specialty) LIKE ?");
+      args.push(`%${specialty}%`);
+    }
 
-  const sql = `
-    SELECT d.id, u.email, u.role, d.name, d.specialty, d.city
-    FROM doctors d
-    JOIN users u ON u.id = d.user_id
-    ${where.length ? "WHERE " + where.join(" AND ") : ""}
-    ORDER BY d.id DESC
-    LIMIT 1
-  `;
+    const sql = `
+      SELECT d.id, u.email, u.role, d.name, d.specialty, d.city
+      FROM doctors d
+      JOIN users u ON u.id = d.user_id
+      ${where.length ? "WHERE " + where.join(" AND ") : ""}
+      ORDER BY d.id DESC
+      LIMIT 50
+    `;
 
-  const [rows] = await pool.query(sql, args);
-  res.json({ items: rows });
+    const [rows] = await pool.query(sql, args);
+    res.json({ items: rows });
+  } catch (err) {
+    console.error("DOCTORS SEARCH ERROR:", err);
+    res.status(500).json({ message: "Search failed" });
+  }
 });
+
 /* -------------------------------------------------------------------- */
 
 /* ------------------------- ADMIN: LIST -------------------------------- */

@@ -28,7 +28,7 @@ export function parseJwt(token) {
   }
 }
 
-/** Get role from token (UPPERCASE) */
+/** Get role from token (UPPERCASE) — use this instead of localStorage.getItem('role') */
 export function getRole() {
   const t = getToken();
   if (!t) return null;

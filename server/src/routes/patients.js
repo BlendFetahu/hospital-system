@@ -30,4 +30,31 @@ r.post("/", requireAuth, requireRole("ADMIN"), async (req, res) => {
   res.status(201).json({ id: u.insertId, email, role: "PATIENT", name, dob });
 });
 
+
+// DELETE (ADMIN)  /patients/:id
+r.delete("/:id", requireAuth, requireRole("ADMIN"), async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ message: "invalid id" });
+
+  // gjej user_id nga patients
+  const [[p]] = await pool.query("SELECT user_id FROM patients WHERE id=?", [id]);
+  if (!p) return res.status(404).json({ message: "patient not found" });
+
+  // transaksion për fshirje të sigurt
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    await conn.query("DELETE FROM patients WHERE id=?", [id]);
+    await conn.query("DELETE FROM users WHERE id=?", [p.user_id]);
+    await conn.commit();
+    res.json({ ok: true, id });
+  } catch (e) {
+    await conn.rollback();
+    res.status(500).json({ message: "delete failed" });
+  } finally {
+    conn.release();
+  }
+});
+
+
 module.exports = r;
