@@ -26,7 +26,7 @@ export default function WhyChooseUs() {
 
               {/* Foto e doktorit */}
                 <img
-                src="/doctor.png"
+                src="/HomeStaff.png"
                 alt="Our senior doctor"
                 className="relative z-0 w-full h-auto rounded-2xl object-cover drop-shadow-xl"
                 />
@@ -38,7 +38,7 @@ export default function WhyChooseUs() {
                 </div>
 
                 {/* Badge 2 */}
-                <div className="absolute right-0 top-6 z-20 bg-white/95 backdrop-blur rounded-xl shadow-lg px-4 py-3">
+                <div className="absolute right-0 top-0 z-20 bg-white/95 backdrop-blur rounded-xl shadow-lg px-4 py-3">
                 <div className="text-2xl font-semibold text-slate-900">50.000+</div>
                 <div className="text-xs text-slate-500">Patients Treated</div>
                 </div>

@@ -17,6 +17,7 @@ import AdminRoute from "./routes/AdminRoute.jsx";
 import DoctorDashboard from "./pages/DoctorDashboard.jsx";
 import PatientDashboard from "./pages/PatientDashboard.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
+import AboutUs from "./pages/AboutUs.jsx"
 
 function Forbidden() {
   return <div style={{ padding: 24 }}><h2>403 - Forbidden</h2></div>;
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/about" element={<AboutUs />} />
 
         {/* ADMIN */}
         <Route
@@ -56,11 +58,10 @@ export default function App() {
 
         {/* PATIENT */}
        
-
-<Route element={<ProtectedRoute allowed={["PATIENT"]} />}>
-  <Route path="/patient/dashboard" element={<PatientDashboard />} />
-  <Route path="/patient" element={<Navigate to="/patient/dashboard" replace />} />
-</Route>
+        <Route element={<ProtectedRoute allowed={["PATIENT"]} />}>
+          <Route path="/patient/dashboard" element={<PatientDashboard />} />
+          <Route path="/patient" element={<Navigate to="/patient/dashboard" replace />} />
+        </Route>
 
         {/* Error/NotFound */}
         <Route path="/403" element={<Forbidden />} />

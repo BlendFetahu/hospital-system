@@ -17,15 +17,23 @@ export default function Slider() {
   }, [slides.length]);
 
   return (
-    <section className="py-10 bg-gradient-to-br from-emerald-400 via-teal-500 to-emerald-700">
-      {slides.length > 0 && (
-        <img
-          src={slides[activeSlide]}
-          alt="Clinic presentation"
-          className="mx-auto rounded-xl shadow-lg w-full max-w-4xl h-[400px] object-cover"
-        />
-      )}
-    </section>
+  <section className="bg-gradient-to-br from-emerald-400 via-teal-500 to-emerald-700 py-8">
+  <div className="mx-auto max-w-5xl px-4 text-center text-white">
+    <h2 className="text-2xl sm:text-3xl font-bold">A Glimpse Into Our Clinic</h2>
+    <p className="mt-2 text-sm sm:text-base text-emerald-100">
+      Discover our modern facilities designed to keep you comfortable and cared for.
+    </p>
+
+    {slides.length > 0 && (
+      <img
+        src={slides[activeSlide]}
+        alt="Clinic presentation"
+        className="mt-6 mx-auto w-full max-w-4xl h-56 sm:h-72 md:h-80 lg:h-[360px] rounded-xl shadow-xl object-cover"
+      />
+    )}
+  </div>
+</section>
+
   );
 }
 

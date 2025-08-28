@@ -2,14 +2,12 @@ import { useMemo, useState } from "react";
 import Card from "./Card";
 
 export default function DiagnosesTab({ patients, diagnoses, setDiagnoses, fullName, fmt }) {
- 
   const [form, setForm] = useState({ patientId: "", title: "", description: "" });
   const [diagFilter, setDiagFilter] = useState("");
   const [showPicker, setShowPicker] = useState(false);
 
   const [editId, setEditId] = useState(null);
   const [editForm, setEditForm] = useState({ title: "", description: "" });
-
 
   const visibleDiagnoses = useMemo(() => {
     const q = (diagFilter || "").toLowerCase();
@@ -22,7 +20,6 @@ export default function DiagnosesTab({ patients, diagnoses, setDiagnoses, fullNa
     setDiagFilter("");
   };
 
-  
   function submitDiagnosis(e) {
     e.preventDefault();
     if (!form.patientId || !form.title) { alert("Select patient and enter title."); return; }
@@ -58,11 +55,15 @@ export default function DiagnosesTab({ patients, diagnoses, setDiagnoses, fullNa
 
   return (
     <Card title="Diagnoses">
-      <form onSubmit={submitDiagnosis} className="flex gap-3 flex-wrap mb-4 items-start">
-        {/* Combined search + picker */}
-        <div className="relative w-full sm:w-auto">
+      {/* ====== FORM (layout only changed) ====== */}
+      <form
+        onSubmit={submitDiagnosis}
+        className="grid gap-3 grid-cols-1 md:grid-cols-12 items-start mb-4"
+      >
+        {/* Search + picker */}
+        <div className="relative md:col-span-4">
           <input
-            className="border p-2 rounded min-w-[260px] w-full"
+            className="border p-2.5 rounded w-full"
             placeholder="Search patient…"
             value={diagFilter}
             onChange={e => { setDiagFilter(e.target.value); setShowPicker(true); }}
@@ -90,25 +91,41 @@ export default function DiagnosesTab({ patients, diagnoses, setDiagnoses, fullNa
           )}
         </div>
 
-        <input
-          className="border p-2 rounded flex-1 min-w-[220px] w-full sm:w-auto"
-          placeholder="Diagnosis title"
-          value={form.title}
-          onChange={e => setForm({ ...form, title: e.target.value })}
-          required
-        />
-        <textarea
-          className="border p-2 rounded flex-[2] min-h-[100px] w-full"
-          placeholder="Report / notes (long text)…"
-          value={form.description}
-          onChange={e => setForm({ ...form, description: e.target.value })}
-        />
-        <button className="w-full sm:w-auto px-4 py-2 rounded bg-amber-500 hover:bg-amber-600 text-white" type="submit">
-          Save
-        </button>
+        {/* Title */}
+        <div className="md:col-span-6">
+          <input
+            className="border p-2.5 rounded w-full"
+            placeholder="Diagnosis title"
+            value={form.title}
+            onChange={e => setForm({ ...form, title: e.target.value })}
+            required
+          />
+        </div>
+
+        {/* Save button (top row, right-aligned on desktop) */}
+        <div className="md:col-span-2 md:justify-self-end md:self-stretch">
+          <button
+            type="submit"
+            className="w-full h-full md:h-auto px-4 py-2 rounded bg-amber-500 hover:bg-amber-600 text-white"
+          >
+            Save
+          </button>
+        </div>
+
+        {/* Notes / description (full width, below) */}
+        <div className="md:col-span-12">
+          <textarea
+            className="border p-2.5 rounded w-full min-h-[120px]"
+            placeholder="Report / notes (long text)…"
+            value={form.description}
+            onChange={e => setForm({ ...form, description: e.target.value })}
+          />
+        </div>
       </form>
 
-      {visibleDiagnoses.length === 0 && <div className="text-sm text-gray-500">No diagnoses match.</div>}
+      {visibleDiagnoses.length === 0 && (
+        <div className="text-sm text-gray-500">No diagnoses match.</div>
+      )}
 
       <ul className="space-y-2">
         {visibleDiagnoses.map(d => (
@@ -140,7 +157,7 @@ export default function DiagnosesTab({ patients, diagnoses, setDiagnoses, fullNa
                   value={editForm.description}
                   onChange={e => setEditForm({ ...editForm, description: e.target.value })}
                 />
-                <button className="text-xs px-3 py-1 rounded bg-emerald-600 text-white" type="submit">Save</button>
+                <button className="px-4 py-2 rounded bg-amber-500 hover:bg-amber-600 text-white w-full sm:w-auto sm:flex-1" type="submit">Save</button>
                 <button className="text-xs px-3 py-1 rounded bg-gray-200" type="button" onClick={() => setEditId(null)}>Cancel</button>
               </form>
             )}
