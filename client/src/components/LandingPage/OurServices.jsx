@@ -1,47 +1,50 @@
 export default function ServicesSection() {
-  const items = [
+   const items = [
     {
-      title: "Cardiology",
-      desc: "Heart checkups, ECG, blood pressure monitoring, and cardiac care.",
+      title: "24/7 Phone Support",
+      desc: "Speak to our team anytime for urgent questions or guidance.",
       icon: (
         <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M12 21s-6.5-4.6-9-8.3C1 9.7 2.4 6.7 5.6 6.2c1.8-.3 3.4.6 4.4 2 1-1.4 2.6-2.3 4.4-2 3.2.5 4.6 3.5 2.6 6.5C18.5 16.4 12 21 12 21z" />
+          <path d="M22 16.92v2a2 2 0 0 1-2.18 2A19.86 19.86 0 0 1 3.1 4.18 2 2 0 0 1 5.07 2h2a2 2 0 0 1 2 1.72c.1.74.26 1.46.48 2.15a2 2 0 0 1-.45 2.11l-1 1a16 16 0 0 0 6.88 6.88l1-1a2 2 0 0 1 2.11-.45c.69.22 1.41.38 2.15.48A2 2 0 0 1 22 16.92z"/>
         </svg>
       ),
     },
     {
-      title: "Orthopedics",
-      desc: "Diagnosis and treatment for bones, joints, muscles, and rehab.",
+      title: "Same-Day Appointments",
+      desc: "Fast scheduling for urgent needs and follow-ups.",
       icon: (
         <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M4 15l6-6m-3 9l9-9M7 18l10-10" strokeLinecap="round" />
-          <circle cx="6.5" cy="17.5" r="1.5" fill="currentColor" />
-          <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+          <path d="M12 14v3l2 1"/>
         </svg>
       ),
     },
     {
-      title: "Gynecology",
-      desc: "Checkups, ultrasound, family planning, and prenatal care.",
+      title: "Experienced Specialists",
+      desc: "Board-certified doctors with years of clinical experience.",
       icon: (
         <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <circle cx="12" cy="8" r="4" />
-          <path d="M12 12v8M12 16h4M12 16H8" strokeLinecap="round" />
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M8 14l-2 7 6-3 6 3-2-7"/>
         </svg>
       ),
     },
     {
-      title: "Pediatrics",
-      desc: "Dedicated care for children: vaccines, growth checks, guidance.",
+      title: "Modern Diagnostics",
+      desc: "On-site ultrasound, ECG, and lab tests for quick results.",
       icon: (
         <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <circle cx="9" cy="7" r="3" />
-          <circle cx="15" cy="7" r="3" />
-          <path d="M5 20a7 7 0 0 1 14 0" />
+          <rect x="3" y="4" width="18" height="13" rx="2"/>
+          <path d="M7 14l2-4 2 3 2-2 2 3"/>
+          <path d="M8 21h8M12 17v4"/>
         </svg>
       ),
     },
   ];
+
 
   return (
     <section className="bg-gray-50 py-16">
@@ -84,20 +87,6 @@ export default function ServicesSection() {
               </p>
             </div>
           ))}
-        </div>
-
-        {/* Button under the cards */}
-        <div className="mt-10 flex justify-center">
-          <button
-            type="button"
-            className="
-              rounded-full bg-emerald-600 px-6 py-3 text-white font-semibold
-              shadow hover:bg-emerald-700 focus:outline-none
-              focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2
-            "
-          >
-            View Staff
-          </button>
         </div>
       </div>
     </section>

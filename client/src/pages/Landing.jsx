@@ -2,6 +2,8 @@ import HeroSearchBar from "../components/search/HeroSearchBar";
 import WhyChooseUs from "../components/LandingPage/WhyChooseUs";
 import OurServices from "../components/LandingPage/OurServices";
 import Slider from "../components/LandingPage/Slider";
+import StaffIntro from "../components/LandingPage/StaffIntro";
+import OurLocation from "../components/LandingPage/OurLocation"
 
 export default function Landing() {
   return (
@@ -30,6 +32,20 @@ export default function Landing() {
       <section className="py-10 bg-gradient-to-br from-emerald-400 via-teal-500 to-emerald-700">
         <Slider />
       </section>
+
+
+      {/* Staff Intro */}
+      <section className="bg-white text-slate-900">
+        <StaffIntro />
+      </section>
+
+
+      {/* Our Location */}
+      <section className="bg-white text-slate-900">
+        <OurLocation />
+      </section>
+
+
     </main>
     
   );
