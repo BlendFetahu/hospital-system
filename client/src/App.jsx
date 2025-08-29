@@ -1,7 +1,7 @@
 // client/src/App.jsx
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import ProtectedRoute from "./routes/ProtectedRoute.jsx"; 
+import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import Header from "./components/Header.jsx";
 import Footer from "./components/Footer.jsx";
 
@@ -40,28 +40,27 @@ export default function App() {
         <Route path="/search" element={<SearchPage />} />
         <Route path="/about" element={<AboutUs />} />
 
+
+
         {/* ADMIN */}
-        <Route
-          path="/admin/dashboard"
-          element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          }
-        />
-        {/* ⬇️ alias që të mos marrësh 404 te /admin */}
-        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route element={<ProtectedRoute allowed={['ADMIN']} />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+        </Route>
 
         {/* DOCTOR */}
-        <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-        <Route path="/doctor" element={<Navigate to="/doctor/dashboard" replace />} />
+        <Route element={<ProtectedRoute allowed={['DOCTOR']} />}>
+          <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+          <Route path="/doctor" element={<Navigate to="/doctor/dashboard" replace />} />
+        </Route>
 
         {/* PATIENT */}
-       
-        <Route element={<ProtectedRoute allowed={["PATIENT"]} />}>
+        <Route element={<ProtectedRoute allowed={['PATIENT']} />}>
           <Route path="/patient/dashboard" element={<PatientDashboard />} />
           <Route path="/patient" element={<Navigate to="/patient/dashboard" replace />} />
         </Route>
+
+
 
         {/* Error/NotFound */}
         <Route path="/403" element={<Forbidden />} />
