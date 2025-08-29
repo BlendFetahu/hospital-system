@@ -45,3 +45,18 @@ export async function getAdminStats() {
   return data; // { doctors: n, patients: n, appointmentsToday: n }
 }
 
+// ---- DOCTOR API (front) ----
+export async function getMyPatients() {
+  const { data } = await api.get("/doctors/me/patients");
+  return data?.items ?? data ?? [];
+}
+export async function getMyAppointments() {
+  const { data } = await api.get("/doctors/me/appointments");
+  return data?.items ?? data ?? [];
+}
+export async function getMyDiagnoses() {
+  const { data } = await api.get("/doctors/me/diagnoses");
+  return data?.items ?? data ?? [];
+}
+
+

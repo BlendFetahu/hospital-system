@@ -6,6 +6,8 @@ const { requireAuth, requireRole } = require("./middlewares/auth");
 const doctors = require("./routes/doctors");
 const patients = require("./routes/patients");
 
+
+
 const app = express();
 app.use(cors({
   origin: true,   // ⬅️ URL e klientit tënd (Vite)
@@ -18,6 +20,8 @@ app.get("/health", (_req,res)=>res.json({ok:true}));
 app.use("/auth", auth);
 app.use("/doctors", doctors);
 app.use("/patients", patients);
+
+
 
 app.get("/me", requireAuth, (req,res)=>res.json({user:req.user}));
 app.get("/admin/ping",  requireAuth, requireRole("ADMIN"),  (_req,res)=>res.json({ok:true}));

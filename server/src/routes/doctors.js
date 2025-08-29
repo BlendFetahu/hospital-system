@@ -78,4 +78,87 @@ r.post("/", requireAuth, requireRole("ADMIN"), async (req, res) => {
 });
 /* ---------------------------------------------------------------------- */
 
+
+/* ---------------------- DOCTOR: helpers ---------------------- */
+async function getDoctorIdByUserId(pool, userId) {
+  const [rows] = await pool.query("SELECT id FROM doctors WHERE user_id = ?", [userId]);
+  return rows.length ? rows[0].id : null;
+}
+
+/* ---------------------- DOCTOR: pacientët e mi ---------------------- */
+// GET /doctors/me/patients  (DOCTOR)
+r.get("/me/patients", requireAuth, requireRole("DOCTOR"), async (req, res) => {
+  try {
+    const doctorId = await getDoctorIdByUserId(pool, req.user.id);
+    if (!doctorId) return res.status(404).json({ message: "Doctor not found" });
+
+    const [rows] = await pool.query(`
+      SELECT DISTINCT p.*
+      FROM patients p
+      JOIN appointments a ON a.patient_id = p.id
+      WHERE a.doctor_id = ?
+      ORDER BY p.id DESC
+      LIMIT 100
+    `, [doctorId]);
+
+    res.json({ items: rows });
+  } catch (err) {
+    console.error("DOCTOR /me/patients error:", err);
+    res.status(500).json({ message: "Failed to load patients" });
+  }
+});
+
+/* ---------------- DOCTOR: takimet e mia ---------------- */
+// GET /doctors/me/appointments  (DOCTOR)
+r.get("/me/appointments", requireAuth, requireRole("DOCTOR"), async (req, res) => {
+  try {
+    const [[doc]] = await pool.query(
+      "SELECT id FROM doctors WHERE user_id = ?",
+      [req.user.id]
+    );
+    if (!doc) return res.status(404).json({ message: "Doctor not found" });
+
+    // ⬇️ mos prek emrat e kolonave; kthe a.* dhe rendit sipas a.id
+    const [rows] = await pool.query(`
+      SELECT 
+        a.*, 
+        p.first_name, p.last_name, p.email
+      FROM appointments a
+      JOIN patients p ON p.id = a.patient_id
+      WHERE a.doctor_id = ?
+      ORDER BY a.id DESC
+      LIMIT 100
+    `, [doc.id]);
+
+    res.json({ items: rows });
+  } catch (err) {
+    console.error("DOCTOR /me/appointments error:", err);
+    res.status(500).json({ message: "Failed to load appointments" });
+  }
+});
+
+
+/* ---------------------- DOCTOR: diagnozat e mia ---------------------- */
+// GET /doctors/me/diagnoses  (DOCTOR)
+r.get("/me/diagnoses", requireAuth, requireRole("DOCTOR"), async (req, res) => {
+  try {
+    const doctorId = await getDoctorIdByUserId(pool, req.user.id);
+    if (!doctorId) return res.status(404).json({ message: "Doctor not found" });
+
+    const [rows] = await pool.query(`
+      SELECT d.id, d.patient_id, d.doctor_id, d.title, d.description, d.created_at
+      FROM diagnoses d
+      WHERE d.doctor_id = ?
+      ORDER BY d.created_at DESC
+      LIMIT 100
+    `, [doctorId]);
+
+    res.json({ items: rows });
+  } catch (err) {
+    console.error("DOCTOR /me/diagnoses error:", err);
+    res.status(500).json({ message: "Failed to load diagnoses" });
+  }
+});
+
+
 module.exports = r;

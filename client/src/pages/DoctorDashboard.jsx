@@ -32,7 +32,6 @@ export default function DoctorDashboard() {
     const fn = (me?.firstName || me?.name || "").trim();
     const ln = (me?.lastName || "").trim();
     const combined = (fn + " " + ln).trim();
-    // fallback to email if no name fields
     return combined || me?.email || "Doctor";
   }
   function fullName(p) {
@@ -47,7 +46,7 @@ export default function DoctorDashboard() {
     return d.toLocaleString();
   }
 
-  // ---- Guard + initial load (like AdminDashboard) ----
+  // ---- Guard + initial load ----
   useEffect(() => {
     async function run() {
       const role = getRole();
@@ -56,22 +55,38 @@ export default function DoctorDashboard() {
         return;
       }
       try {
-        // who am I?
+        // kush jam?
         const meRes = await api.get("/me");
         setMe(meRes.data.user || null);
 
-        // load data (scoped on backend to this doctor)
+        // thirr rruget e mjekut
         const [pRes, aRes, dRes] = await Promise.all([
-          api.get("/patients"),
-          api.get("/appointments"),
-          api.get("/diagnoses"),
+          api.get("/doctors/me/patients"),
+          api.get("/doctors/me/appointments"),
+          api.get("/doctors/me/diagnoses"),
         ]);
 
+        // patients
         setPatients(Array.isArray(pRes.data) ? pRes.data : pRes.data?.items ?? []);
-        setAppointments(Array.isArray(aRes.data) ? aRes.data : aRes.data?.items ?? []);
+
+        // appointments: normalizo emrat e datave në starts_at/ends_at
+        const rawAppts = Array.isArray(aRes.data) ? aRes.data : aRes.data?.items ?? [];
+        const appts = rawAppts.map(a => {
+          const starts =
+            a.starts_at ||
+            a.start_time ||
+            a.scheduled_at ||
+            (a.appointment_date && a.appointment_time
+              ? `${a.appointment_date} ${a.appointment_time}`
+              : a.appointment_date || a.date || null);
+          const ends = a.ends_at || a.end_time || null;
+          return { ...a, starts_at: starts, ends_at: ends };
+        });
+        setAppointments(appts);
+
+        // diagnoses
         setDiagnoses(Array.isArray(dRes.data) ? dRes.data : dRes.data?.items ?? []);
       } catch (err) {
-        // token invalid or API blocked → back to login
         navigate("/login", { replace: true });
       } finally {
         setChecking(false);
@@ -84,7 +99,6 @@ export default function DoctorDashboard() {
 
   return (
     <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-8">
-      {/* Header (uses shared logout helper) */}
       <DashboardHeader
         name={doctorFullName()}
         specialty={me?.specialty}
@@ -92,21 +106,18 @@ export default function DoctorDashboard() {
         onLogout={logout}
       />
 
-      {/* Stats */}
       <StatsRow
         patientsCount={patients.length}
         appointmentsCount={appointments.length}
         diagnosesCount={diagnoses.length}
       />
 
-      {/* Tabs */}
       <div className="flex gap-2">
         <Tab active={tab === "patients"} onClick={() => setTab("patients")}>Patients</Tab>
         <Tab active={tab === "appointments"} onClick={() => setTab("appointments")}>Appointments</Tab>
         <Tab active={tab === "diagnoses"} onClick={() => setTab("diagnoses")}>Diagnoses</Tab>
       </div>
 
-      {/* Patients */}
       {tab === "patients" && (
         <PatientsTab
           patients={patients}
@@ -115,7 +126,6 @@ export default function DoctorDashboard() {
         />
       )}
 
-      {/* Appointments */}
       {tab === "appointments" && (
         <AppointmentsTab
           appointments={appointments}
@@ -124,7 +134,6 @@ export default function DoctorDashboard() {
         />
       )}
 
-      {/* Diagnoses */}
       {tab === "diagnoses" && (
         <DiagnosesTab
           patients={patients}
