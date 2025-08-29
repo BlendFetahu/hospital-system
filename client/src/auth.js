@@ -32,9 +32,12 @@ export function parseJwt(token) {
 export function getRole() {
   const t = getToken();
   if (!t) return null;
-  const payload = parseJwt(t);
-  return (payload?.role || "").toUpperCase() || null;
+  const payload = parseJwt(t);          // mund të kthejë null
+  const raw = (payload?.role ?? "");    // shmang undefined
+  return raw.replace(/^ROLE_/i, "").toUpperCase() || null;
 }
+
+
 
 /** Is token expired? */
 export function isExpired() {
