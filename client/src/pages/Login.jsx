@@ -18,6 +18,9 @@ export default function Login() {
       const { data } = await api.post("/auth/login", { email, password });
       localStorage.setItem("token", data.token);
 
+      console.log("LOGIN RESP:", data);
+
+
       const payload = parseJwt(data.token);
       const role = (payload?.role || "").toUpperCase();
 

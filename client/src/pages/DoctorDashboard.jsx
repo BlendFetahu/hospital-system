@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+// client/src/pages/DoctorDashboard.jsx
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import DashboardHeader from "../components/DoctorD/DashboardHeader.jsx";
 import StatsRow from "../components/DoctorD/StatsRow.jsx";
 import PatientsTab from "../components/DoctorD/PatientsTab.jsx";
@@ -6,27 +9,36 @@ import AppointmentsTab from "../components/DoctorD/AppointmentsTab.jsx";
 import DiagnosesTab from "../components/DoctorD/DiagnosesTab.jsx";
 import Tab from "../components/DoctorD/Tab.jsx";
 
+import api from "../api";
+import { getRole, logout } from "../auth";
 
-/* ---- Doctor Dashboard ---- */
 export default function DoctorDashboard() {
-  // shared: doctor profile
-  const [me] = useState({
-    firstName: "John",
-    lastName: "Doe",
-    specialty: "Internal Medicine",
-    email: "doc@gmail.com",
-  });
+  const navigate = useNavigate();
 
-  // shared helpers
+  // ---- Me (doctor) ----
+  const [me, setMe] = useState(null);
+  const [checking, setChecking] = useState(true);
+
+  // ---- Data from API ----
+  const [patients, setPatients] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [diagnoses, setDiagnoses] = useState([]);
+
+  // ---- UI ----
+  const [tab, setTab] = useState("patients");
+
+  // ---- Helpers ----
   function doctorFullName() {
-    const fn = (me.firstName || "").trim();
-    const ln = (me.lastName || "").trim();
-    return (fn + " " + ln).trim();
+    const fn = (me?.firstName || me?.name || "").trim();
+    const ln = (me?.lastName || "").trim();
+    const combined = (fn + " " + ln).trim();
+    // fallback to email if no name fields
+    return combined || me?.email || "Doctor";
   }
   function fullName(p) {
     const fn = (p.firstName || "").trim();
     const ln = (p.lastName || "").trim();
-    return (fn + " " + ln).trim();
+    return (fn + " " + ln).trim() || p.email || "Unknown";
   }
   function fmt(iso) {
     if (!iso) return "";
@@ -35,29 +47,50 @@ export default function DoctorDashboard() {
     return d.toLocaleString();
   }
 
-  // shared data (mock for now; will be API later)
-  const [patients, setPatients] = useState([
-    { id: 1, firstName: "Patient", lastName: "One",   email: "pat1@test.com", phone: "",            gender: "Female", dob: "1999-05-05" },
-    { id: 2, firstName: "Patient", lastName: "Two",   email: "pat2@test.com", phone: "044-000-002", gender: "Male",   dob: "1988-01-12" },
-    { id: 3, firstName: "Patient", lastName: "Three", email: "pat3@test.com", phone: "",            gender: "Male",   dob: "" },
-  ]);
-  const [appointments, setAppointments] = useState([
-    { id: 11, patientId: 1, patientName: "Patient One",   scheduled_at: new Date(Date.now() + 86400000).toISOString(),  status: "scheduled", reason: "Checkup" },
-    { id: 12, patientId: 2, patientName: "Patient Two",   scheduled_at: new Date(Date.now() - 3600_000).toISOString(),   status: "done",      reason: "Follow-up" },
-    { id: 13, patientId: 3, patientName: "Patient Three", scheduled_at: new Date(Date.now() + 2 * 86400000).toISOString(), status: "cancelled", reason: "Consult" },
-  ]);
-  const [diagnoses, setDiagnoses] = useState([
-    { id: 21, patientId: 1, patientName: "Patient One",  title: "Hypertension", description: "BP high; recheck in 2 weeks", created_at: new Date().toISOString() },
-    { id: 22, patientId: 2, patientName: "Patient Two",  title: "Diabetes T2",  description: "Diet + Metformin",            created_at: new Date().toISOString() },
-  ]);
+  // ---- Guard + initial load (like AdminDashboard) ----
+  useEffect(() => {
+    async function run() {
+      const role = getRole();
+      if (role !== "DOCTOR") {
+        navigate("/login", { replace: true });
+        return;
+      }
+      try {
+        // who am I?
+        const meRes = await api.get("/me");
+        setMe(meRes.data.user || null);
 
-  // tabs
-  const [tab, setTab] = useState("patients");
+        // load data (scoped on backend to this doctor)
+        const [pRes, aRes, dRes] = await Promise.all([
+          api.get("/patients"),
+          api.get("/appointments"),
+          api.get("/diagnoses"),
+        ]);
+
+        setPatients(Array.isArray(pRes.data) ? pRes.data : pRes.data?.items ?? []);
+        setAppointments(Array.isArray(aRes.data) ? aRes.data : aRes.data?.items ?? []);
+        setDiagnoses(Array.isArray(dRes.data) ? dRes.data : dRes.data?.items ?? []);
+      } catch (err) {
+        // token invalid or API blocked → back to login
+        navigate("/login", { replace: true });
+      } finally {
+        setChecking(false);
+      }
+    }
+    run();
+  }, [navigate]);
+
+  if (checking) return <div className="p-6">Loading…</div>;
 
   return (
     <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-8">
-      {/* Header */}
-      <DashboardHeader name={doctorFullName()} specialty={me.specialty} />
+      {/* Header (uses shared logout helper) */}
+      <DashboardHeader
+        name={doctorFullName()}
+        specialty={me?.specialty}
+        email={me?.email}
+        onLogout={logout}
+      />
 
       {/* Stats */}
       <StatsRow
@@ -71,8 +104,7 @@ export default function DoctorDashboard() {
         <Tab active={tab === "patients"} onClick={() => setTab("patients")}>Patients</Tab>
         <Tab active={tab === "appointments"} onClick={() => setTab("appointments")}>Appointments</Tab>
         <Tab active={tab === "diagnoses"} onClick={() => setTab("diagnoses")}>Diagnoses</Tab>
-       </div>
-
+      </div>
 
       {/* Patients */}
       {tab === "patients" && (
@@ -105,7 +137,3 @@ export default function DoctorDashboard() {
     </div>
   );
 }
-
-
-
-
