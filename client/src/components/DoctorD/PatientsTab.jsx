@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
 import Card from "./Card.jsx";
+import api from "../../api";
+
 
 export default function PatientsTab({ patients, setPatients, fullName }) {
   
@@ -25,32 +27,47 @@ export default function PatientsTab({ patients, setPatients, fullName }) {
   }, [patients, search]);
 
   
-  function addPatient(e) {
-    e.preventDefault();
-    const fn = (newPatient.firstName || "").trim();
-    const ln = (newPatient.lastName || "").trim();
-    const g  = (newPatient.gender || "").trim();
-    const dob = (newPatient.dob || "").trim();
+  async function addPatient(e) {
+  e.preventDefault();
 
-    if (!fn || !ln) { alert("First name and Last name are required."); return; }
-    if (!g) { alert("Please select gender."); return; }
-    if (!dob) { alert("Date of birth is required."); return; }
+  const fn  = (newPatient.firstName || "").trim();
+  const ln  = (newPatient.lastName || "").trim();
+  const g   = (newPatient.gender || "").trim();
+  const dob = (newPatient.dob || "").trim();
 
-    const nextId = patients.length ? Math.max.apply(null, patients.map(p => p.id)) + 1 : 1;
+  if (!fn || !ln) { alert("First name dhe Last name janë të detyrueshme."); return; }
+  if (!g)         { alert("Zgjidh gender."); return; }
+  if (!dob)       { alert("Date of birth është e detyrueshme."); return; }
+
+  try {
+    const { data: created } = await api.post("/doctors/me/patients", {
+      first_name: fn,
+      last_name:  ln,
+      dob,                      
+      email: (newPatient.email || "").trim() || null,
+      phone: (newPatient.phone || "").trim() || null,
+      gender: g,                 
+    });
+
     const p = {
-      id: nextId,
-      firstName: fn,
-      lastName: ln,
-      email: (newPatient.email || "").trim(),
-      phone: (newPatient.phone || "").trim(),
-      gender: g,
-      dob: dob
+      id: created.id,
+      firstName: created.first_name ?? fn,
+      lastName:  created.last_name  ?? ln,
+      email:     created.email      ?? newPatient.email,
+      phone:     created.phone      ?? newPatient.phone,
+      gender:    created.gender     ?? g,
+      dob:       created.dob        ?? dob,
     };
 
     setPatients(prev => [p, ...prev]);
     setNewPatient({ firstName:"", lastName:"", email:"", phone:"", gender:"", dob:"" });
     setShowAddPatient(false);
+  } catch (err) {
+    console.error("Create patient failed:", err);
+    alert(err?.response?.data?.message || "Failed to create patient");
   }
+}
+
 
   return (
     <Card

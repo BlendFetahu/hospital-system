@@ -86,27 +86,40 @@ async function getDoctorIdByUserId(pool, userId) {
 }
 
 /* ---------------------- DOCTOR: pacientët e mi ---------------------- */
-// GET /doctors/me/patients  (DOCTOR)
 r.get("/me/patients", requireAuth, requireRole("DOCTOR"), async (req, res) => {
   try {
-    const doctorId = await getDoctorIdByUserId(pool, req.user.id);
-    if (!doctorId) return res.status(404).json({ message: "Doctor not found" });
+    const [[doc]] = await pool.query("SELECT id FROM doctors WHERE user_id = ?", [req.user.id]);
+    if (!doc) return res.status(404).json({ message: "Doctor not found" });
 
-    const [rows] = await pool.query(`
-      SELECT DISTINCT p.*
-      FROM patients p
-      JOIN appointments a ON a.patient_id = p.id
-      WHERE a.doctor_id = ?
-      ORDER BY p.id DESC
-      LIMIT 100
-    `, [doctorId]);
+
+const [rows] = await pool.query(
+  `
+  SELECT DISTINCT
+    p.id,
+    p.first_name AS firstName,
+    p.last_name  AS lastName,
+    p.email,
+    p.phone,
+    p.gender,
+    DATE_FORMAT(p.dob, '%Y-%m-%d') AS dob
+  FROM patients p
+  LEFT JOIN appointments a
+    ON a.patient_id = p.id AND a.doctor_id = ?
+  WHERE a.id IS NOT NULL OR p.created_by_doctor_id = ?
+  ORDER BY p.id DESC
+  LIMIT 100
+  `,
+  [doc.id, doc.id]
+);
+
 
     res.json({ items: rows });
   } catch (err) {
-    console.error("DOCTOR /me/patients error:", err);
+    console.error("GET /doctors/me/patients error:", err);
     res.status(500).json({ message: "Failed to load patients" });
   }
 });
+
 
 /* ---------------- DOCTOR: takimet e mia ---------------- */
 // GET /doctors/me/appointments  (DOCTOR)
@@ -118,17 +131,20 @@ r.get("/me/appointments", requireAuth, requireRole("DOCTOR"), async (req, res) =
     );
     if (!doc) return res.status(404).json({ message: "Doctor not found" });
 
-    // ⬇️ mos prek emrat e kolonave; kthe a.* dhe rendit sipas a.id
-    const [rows] = await pool.query(`
-      SELECT 
-        a.*, 
-        p.first_name, p.last_name, p.email
-      FROM appointments a
-      JOIN patients p ON p.id = a.patient_id
-      WHERE a.doctor_id = ?
-      ORDER BY a.id DESC
-      LIMIT 100
-    `, [doc.id]);
+
+      const [rows] = await pool.query(`
+        SELECT 
+          a.*,
+          p.first_name AS patientFirstName,
+          p.last_name  AS patientLastName,
+          p.email      AS patientEmail
+        FROM appointments a
+        JOIN patients p ON p.id = a.patient_id
+        WHERE a.doctor_id = ?
+        ORDER BY a.id DESC
+        LIMIT 100
+      `, [doc.id]);
+
 
     res.json({ items: rows });
   } catch (err) {
@@ -159,6 +175,162 @@ r.get("/me/diagnoses", requireAuth, requireRole("DOCTOR"), async (req, res) => {
     res.status(500).json({ message: "Failed to load diagnoses" });
   }
 });
+
+
+/* ------------- DOCTOR: krijo pacient ------------- */
+r.post("/me/patients", requireAuth, requireRole("DOCTOR"), async (req, res) => {
+  try {
+    const { first_name, last_name, dob, email, phone, gender } = req.body || {};
+    if (!first_name || !last_name || !dob || !gender) {
+      return res.status(400).json({ message: "first_name, last_name, dob, gender janë të detyrueshme" });
+    }
+    if (gender !== "Male" && gender !== "Female") {
+      return res.status(400).json({ message: "gender duhet 'Male' ose 'Female'" });
+    }
+
+  
+    const [[doc]] = await pool.query("SELECT id FROM doctors WHERE user_id = ?", [req.user.id]);
+    if (!doc) return res.status(404).json({ message: "Doctor not found" });
+
+  
+    const [ins] = await pool.query(
+      `INSERT INTO patients (first_name, last_name, dob, email, phone, gender, created_by_doctor_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [first_name, last_name, dob, email || null, phone || null, gender, doc.id]
+    );
+
+    const [rows] = await pool.query(`SELECT * FROM patients WHERE id = ?`, [ins.insertId]);
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error("POST /doctors/me/patients error:", err);
+    res.status(500).json({ message: "Failed to create patient" });
+  }
+});
+
+
+/* ------------- DOCTOR: krijo diagnozë ------------- */
+// POST /doctors/me/diagnoses
+// body: { patient_id, title, description }
+r.post("/me/diagnoses", requireAuth, requireRole("DOCTOR"), async (req, res) => {
+  try {
+    const { patient_id, title, description } = req.body || {};
+    if (!patient_id || !title) {
+      return res.status(400).json({ message: "patient_id dhe title janë të detyrueshme" });
+    }
+
+    // gjej doctorId nga përdoruesi i loguar
+    const [[doc]] = await pool.query("SELECT id FROM doctors WHERE user_id = ?", [req.user.id]);
+    if (!doc) return res.status(404).json({ message: "Doctor not found" });
+
+    // verifiko që mjeku mund ta shohë këtë pacient
+    const [[ok]] = await pool.query(
+      `
+      SELECT 1
+      FROM patients p
+      LEFT JOIN appointments a
+        ON a.patient_id = p.id AND a.doctor_id = ?
+      WHERE p.id = ?
+        AND (p.created_by_doctor_id = ? OR a.id IS NOT NULL)
+      LIMIT 1
+      `,
+      [doc.id, patient_id, doc.id]
+    );
+    if (!ok) {
+      return res.status(403).json({ message: "Pacienti nuk është i lidhur me këtë mjek" });
+    }
+
+    // krijo diagnozën
+    const [ins] = await pool.query(
+      `INSERT INTO diagnoses (patient_id, doctor_id, title, description)
+       VALUES (?,?,?,?)`,
+      [patient_id, doc.id, title, description || null]
+    );
+
+    // kthe diagnozën e sapo-krijuar (me emrin e pacientit për UI)
+    const [rows] = await pool.query(
+      `
+      SELECT 
+        d.id, d.patient_id, d.doctor_id, d.title, d.description, d.created_at,
+        p.first_name AS patientFirstName, p.last_name AS patientLastName
+      FROM diagnoses d
+      JOIN patients p ON p.id = d.patient_id
+      WHERE d.id = ?
+      `,
+      [ins.insertId]
+    );
+
+    return res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error("POST /doctors/me/diagnoses error:", err);
+    return res.status(500).json({ message: "Failed to create diagnosis" });
+  }
+});
+
+
+/* ------------- DOCTOR: fshi diagnozë ------------- */
+// DELETE /doctors/me/diagnoses/:id
+r.delete("/me/diagnoses/:id", requireAuth, requireRole("DOCTOR"), async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ message: "Invalid id" });
+    }
+
+    const [[doc]] = await pool.query("SELECT id FROM doctors WHERE user_id = ?", [req.user.id]);
+    if (!doc) return res.status(404).json({ message: "Doctor not found" });
+
+    // fshi vetëm nëse diagnoza i përket këtij mjeku
+    const [del] = await pool.query(
+      "DELETE FROM diagnoses WHERE id = ? AND doctor_id = ?",
+      [id, doc.id]
+    );
+
+    if (del.affectedRows === 0) {
+      return res.status(404).json({ message: "Diagnosis not found" });
+    }
+
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error("DELETE /doctors/me/diagnoses/:id error:", err);
+    res.status(500).json({ message: "Failed to delete diagnosis" });
+  }
+});
+
+
+/* ------------- DOCTOR: përditëso diagnozë ------------- */
+// PUT /doctors/me/diagnoses/:id
+// body: { title, description }
+r.put("/me/diagnoses/:id", requireAuth, requireRole("DOCTOR"), async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { title, description } = req.body || {};
+    if (!Number.isInteger(id)) return res.status(400).json({ message: "Invalid id" });
+    if (!title || !String(title).trim()) return res.status(400).json({ message: "Title required" });
+
+    const [[doc]] = await pool.query("SELECT id FROM doctors WHERE user_id = ?", [req.user.id]);
+    if (!doc) return res.status(404).json({ message: "Doctor not found" });
+
+    const [upd] = await pool.query(
+      "UPDATE diagnoses SET title = ?, description = ? WHERE id = ? AND doctor_id = ?",
+      [title.trim(), description ?? null, id, doc.id]
+    );
+    if (upd.affectedRows === 0) return res.status(404).json({ message: "Diagnosis not found" });
+
+    const [rows] = await pool.query(`
+      SELECT d.id, d.patient_id, d.doctor_id, d.title, d.description, d.created_at,
+             p.first_name AS patientFirstName, p.last_name AS patientLastName
+      FROM diagnoses d
+      JOIN patients p ON p.id = d.patient_id
+      WHERE d.id = ?
+    `, [id]);
+
+    res.json(rows[0]);
+  } catch (err) {
+    console.error("PUT /doctors/me/diagnoses/:id error:", err);
+    res.status(500).json({ message: "Failed to update diagnosis" });
+  }
+});
+
 
 
 module.exports = r;

@@ -2,11 +2,10 @@ import { useMemo, useState } from "react";
 import Card from "./Card";
 
 export default function AppointmentsTab({ appointments, setAppointments, fmt }) {
- 
+
   const [status, setStatus] = useState("all");
   const [openApptMenu, setOpenApptMenu] = useState(null);
 
- 
   function statusBtnClasses(s = "") {
     const k = String(s).toLowerCase();
     if (k === "done") return "bg-emerald-600 hover:bg-emerald-700 text-white";
@@ -20,14 +19,22 @@ export default function AppointmentsTab({ appointments, setAppointments, fmt }) 
     return "bg-amber-100 text-amber-700 hover:bg-amber-200";
   }
 
+  // 🔹 helper për emrin e pacientit (lexon alias-et nga backend)
+  function patientName(a) {
+    if (a.patientName) return a.patientName;
+    const fn = (a.patientFirstName || a.first_name || "").trim();
+    const ln = (a.patientLastName  || a.last_name  || "").trim();
+    const name = (fn + " " + ln).trim();
+    return name || a.patientEmail || a.patient_email || "Unknown patient";
+  }
+
   const filteredAppointments = useMemo(() => {
     return (appointments || [])
       .slice()
-      .sort((a, b) => new Date(b.scheduled_at) - new Date(a.scheduled_at))
+      .sort((a, b) => new Date(b.starts_at || b.scheduled_at) - new Date(a.starts_at || a.scheduled_at))
       .filter(a => (status === "all" ? true : String(a.status).toLowerCase() === status));
   }, [appointments, status]);
 
-  
   function setApptStatusLocal(id, nextStatus) {
     setAppointments(prev => prev.map(a => (a.id === id ? { ...a, status: nextStatus } : a)));
     setOpenApptMenu(null);
@@ -58,8 +65,11 @@ export default function AppointmentsTab({ appointments, setAppointments, fmt }) 
           <li key={a.id} className="rounded border p-3">
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium">{a.patientName}</div>
-                <div className="text-base font-medium text-gray-700">{fmt(a.scheduled_at)}</div>
+                {/* 🔹 këtu përdorim helper-in */}
+                <div className="font-medium">{patientName(a)}</div>
+                <div className="text-base font-medium text-gray-700">
+                  {fmt(a.starts_at || a.scheduled_at)}
+                </div>
               </div>
               <div className="text-right">
                 <button
