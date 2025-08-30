@@ -79,6 +79,37 @@ r.post("/", requireAuth, requireRole("ADMIN"), async (req, res) => {
 /* ---------------------------------------------------------------------- */
 
 
+
+/* ---------------------- ADMIN: DELETE DOCTOR ---------------------- */
+// DELETE /doctors/:id  (ADMIN) – fshin doktorin + user-in + varësitë bazike
+r.delete("/:id", requireAuth, requireRole("ADMIN"), async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ message: "Invalid id" });
+
+    // gjej user_id për këtë doktor
+    const [[doc]] = await pool.query("SELECT user_id FROM doctors WHERE id=?", [id]);
+    if (!doc) return res.status(404).json({ message: "Doctor not found" });
+
+    // nëse nuk ke ON DELETE CASCADE, pastro varësitë bazike:
+    await pool.query("DELETE FROM diagnoses   WHERE doctor_id=?", [id]);
+    await pool.query("DELETE FROM appointments WHERE doctor_id=?", [id]);
+    await pool.query("UPDATE patients SET created_by_doctor_id=NULL WHERE created_by_doctor_id=?", [id]);
+
+    // fshi doctor + user
+    await pool.query("DELETE FROM doctors WHERE id=?", [id]);
+    await pool.query("DELETE FROM users   WHERE id=?", [doc.user_id]);
+
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error("DELETE /doctors/:id error:", err);
+    res.status(500).json({ message: "Failed to delete doctor" });
+  }
+});
+
+
+
+
 /* ---------------------- DOCTOR: helpers ---------------------- */
 async function getDoctorIdByUserId(pool, userId) {
   const [rows] = await pool.query("SELECT id FROM doctors WHERE user_id = ?", [userId]);

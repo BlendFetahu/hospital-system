@@ -26,6 +26,13 @@ export async function createDoctor(payload) {
   return data;
 }
 
+//---Fshij doktoret(ADMIN)
+export function deleteDoctor(id) {
+  return api.delete(`/doctors/${id}`).then(r => r.data);
+}
+
+
+
 // ---- PATIENTS ----
 // Merr pacientët (ADMIN)
 export async function getPatients({ search = "" } = {}) {

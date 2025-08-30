@@ -1,16 +1,11 @@
-// server/src/routes/auth.js
 const express = require("express");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const { pool } = require("../db");
+
 const router = express.Router();
 
-/** ⬇️ ZEVENDESO me DB-në tende. Kjo eshte vetem DEMO in-memory. */
-const users = [
-  // shembuj për testim të shpejtë
-  { id: 1, email: "admin@gmail.com",  passwordHash: "Admin123!",  name: "Admin",  role: "ADMIN" },
-  { id: 2, email: "doc@gmail.com",    passwordHash: "Doctor123!", name: "Dr. D",  role: "DOCTOR" },
-  // pacientët mund të krijohen nga /auth/signup
-];
-
+/** Gjeneron JWT */
 function sign(user) {
   return jwt.sign(
     { id: user.id, email: user.email, role: (user.role || "").toUpperCase() },
@@ -19,44 +14,72 @@ function sign(user) {
   );
 }
 
-/** SIGNUP – i lejohet vetëm pacientit */
+/** SIGNUP – lejo vetëm pacientë */
 router.post("/signup", async (req, res) => {
-  const { email, password, name } = req.body || {};
-  if (!email || !password) return res.status(400).json({ message: "Missing fields" });
-  if (users.find(u => u.email === email)) return res.status(409).json({ message: "Email already used" });
+  try {
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
 
-  const user = {
-    id: users.length + 1,
-    email,
-    passwordHash: password, // ⛔️ DEMO – tek DB përdor hash
-    name: name || null,
-    role: "PATIENT",
-  };
-  users.push(user);
-  return res.status(201).json({ message: "User created" });
+    // kontrollo nëse ekziston
+    const [exists] = await pool.query("SELECT id FROM users WHERE email=?", [email]);
+    if (exists.length) {
+      return res.status(409).json({ message: "Email already used" });
+    }
+
+    // krijo hash
+    const hash = await bcrypt.hash(password, 10);
+
+    // fut pacientin
+    await pool.query(
+      "INSERT INTO users (email, password, role) VALUES (?, ?, 'PATIENT')",
+      [email, hash]
+    );
+
+    return res.status(201).json({ message: "User created" });
+  } catch (err) {
+    console.error("SIGNUP error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
 });
 
-/** LOGIN – ⬅️ KY ndryshim është thelbësor: kthen edhe user.role */
+/** LOGIN – për të gjitha rolet */
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body || {};
-  if (!email || !password) return res.status(400).json({ message: "Missing fields" });
-
-  const user = users.find(u => u.email === email);
-  if (!user) return res.status(401).json({ message: "Invalid credentials" });
-
-  const ok = user.passwordHash === password; // ⛔️ DEMO – tek DB përdor bcrypt.compare
-  if (!ok) return res.status(401).json({ message: "Invalid credentials" });
-
-  const token = sign(user);
-  return res.json({
-    token,
-    user: {
-      id: user.id,
-      email: user.email,
-      role: (user.role || "").toUpperCase(),
-      name: user.name
+  try {
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+      return res.status(400).json({ message: "Missing fields" });
     }
-  });
+
+    const [rows] = await pool.query(
+      "SELECT id, email, password, role FROM users WHERE email=? LIMIT 1",
+      [email]
+    );
+    if (!rows.length) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const user = rows[0];
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const token = sign(user);
+    return res.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: (user.role || "").toUpperCase(),
+        name: null // sepse users nuk ka kolonë 'name'
+      }
+    });
+  } catch (err) {
+    console.error("LOGIN error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
 });
 
 router.get("/ping", (_req, res) => res.send("auth-pong"));

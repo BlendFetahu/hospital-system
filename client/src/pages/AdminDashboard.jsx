@@ -1,7 +1,7 @@
 // client/src/pages/AdminDashboard.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api, { getDoctors, createDoctor, getPatients, deletePatient } from "../api";
+import api, { getDoctors, createDoctor, getPatients, deletePatient, deleteDoctor } from "../api";
 import { getRole, logout } from "../auth";
 import ConfirmModal from "../components/common/ConfirmModal.jsx";
 import { SPECIALTY_OPTIONS } from "../constants/specialties";
@@ -110,6 +110,22 @@ export default function AdminDashboard() {
       setConfirm({ open: false, id: null });
     }
   }
+
+  // === Modal & handler për fshirje doktori ===
+  const [confirmDoc, setConfirmDoc] = useState({ open: false, id: null });
+
+  async function handleDeleteDoctor(id) {
+    try {
+      await deleteDoctor(id);
+      setDoctors(prev => prev.filter(d => d.id !== id));
+    } catch (e2) {
+      alert(e2?.response?.data?.message || "Failed to delete doctor");
+    } finally {
+      setConfirmDoc({ open: false, id: null });
+    }
+  }
+
+
 
   if (checking) return <div className="p-6">Loading…</div>;
 
@@ -247,8 +263,15 @@ export default function AdminDashboard() {
                           <p className="font-medium">{d.name || "(no name)"}</p>
                           <p className="text-sm text-gray-600">{d.email}</p>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {d.specialty || ""}
+
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm text-gray-500">{d.specialty || ""}</span>
+                          <button
+                            onClick={() => setConfirmDoc({ open: true, id: d.id })}
+                            className="bg-red-600 text-white px-3 py-1.5 rounded-lg"
+                          >
+                            Delete
+                          </button>
                         </div>
                       </li>
                     ))}
@@ -287,13 +310,22 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-      {/* Confirm Delete Modal */}
+      {/* Confirm Delete Modal — Patient */}
       <ConfirmModal
         open={confirm.open}
         title="Delete patient"
         message="Do you really want to delete this patient?"
         onCancel={() => setConfirm({ open: false, id: null })}
         onConfirm={() => handleDeletePatient(confirm.id)}
+      />
+
+      {/* Confirm Delete Modal — Doctor */}
+      <ConfirmModal
+        open={confirmDoc.open}
+        title="Delete doctor"
+        message="Do you really want to delete this doctor?"
+        onCancel={() => setConfirmDoc({ open: false, id: null })}
+        onConfirm={() => handleDeleteDoctor(confirmDoc.id)}
       />
     </div>
   );
