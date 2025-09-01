@@ -22,13 +22,16 @@ router.post("/signup", async (req, res) => {
       return res.status(400).json({ message: "Missing fields" });
     }
 
+    // kontrollo nëse ekziston
     const [exists] = await pool.query("SELECT id FROM users WHERE email=?", [email]);
     if (exists.length) {
       return res.status(409).json({ message: "Email already used" });
     }
 
+    // krijo hash
     const hash = await bcrypt.hash(password, 10);
 
+    // fut pacientin
     await pool.query(
       "INSERT INTO users (email, password, role) VALUES (?, ?, 'PATIENT')",
       [email, hash]
@@ -70,7 +73,7 @@ router.post("/login", async (req, res) => {
         id: user.id,
         email: user.email,
         role: (user.role || "").toUpperCase(),
-        name: null
+        name: null // sepse users nuk ka kolonë 'name'
       }
     });
   } catch (err) {
