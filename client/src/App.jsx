@@ -18,6 +18,7 @@ import DoctorDashboard from "./pages/DoctorDashboard.jsx";
 import PatientDashboard from "./pages/PatientDashboard.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
 import AboutUs from "./pages/AboutUs.jsx"
+import AppointmentNew from "./pages/AppointmentNew.jsx";
 
 function Forbidden() {
   return <div style={{ padding: 24 }}><h2>403 - Forbidden</h2></div>;
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/about" element={<AboutUs />} />
+        <Route path="/appointments/new" element={<AppointmentNew />} />
        
 
 

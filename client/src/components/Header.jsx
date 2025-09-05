@@ -6,8 +6,8 @@ export default function Header() {
 
   const NAV = [
     ["Home", "/"],
-    ["Appointment", "/#appointment"],
-    ["Services", "/#services"],
+    ["Appointment", "/search"],
+    ["Services", "/#Services"],
     ["About us", "/about"],
   ];
 

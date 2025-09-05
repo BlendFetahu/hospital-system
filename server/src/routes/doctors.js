@@ -39,6 +39,35 @@ r.get("/search", async (req, res) => {
     res.status(500).json({ message: "Search failed" });
   }
 });
+/* ---------------------- PUBLIC: get one doctor by id ---------------------- */
+// GET /doctors/by-id/:id  -> { item: { id, email, role, name, specialty, city } }
+r.get("/by-id/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ message: "Invalid id" });
+    }
+
+    const [rows] = await pool.query(
+      `
+      SELECT d.id, u.email, u.role, d.name, d.specialty, d.city
+      FROM doctors d
+      JOIN users u ON u.id = d.user_id
+      WHERE d.id = ?
+      LIMIT 1
+      `,
+      [id]
+    );
+
+    if (!rows.length) return res.status(404).json({ message: "Doctor not found" });
+    res.json({ item: rows[0] });
+  } catch (err) {
+    console.error("GET /doctors/by-id/:id error:", err);
+    res.status(500).json({ message: "Failed to load doctor" });
+  }
+});
+/* -------------------------------------------------------------------------- */
+
 
 /* -------------------------------------------------------------------- */
 
