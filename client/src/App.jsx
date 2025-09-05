@@ -39,7 +39,7 @@ export default function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/about" element={<AboutUs />} />
-
+       
 
 
         {/* ADMIN */}
