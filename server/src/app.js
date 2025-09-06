@@ -5,7 +5,7 @@ const auth = require("./routes/auth");
 const { requireAuth, requireRole } = require("./middlewares/auth");
 const doctors = require("./routes/doctors");
 const patients = require("./routes/patients");
-
+const appointments = require("./routes/appointments");
 
 
 const app = express();
@@ -20,7 +20,7 @@ app.get("/health", (_req,res)=>res.json({ok:true}));
 app.use("/auth", auth);
 app.use("/doctors", doctors);
 app.use("/patients", patients);
-
+app.use("/appointments", appointments);
 
 
 app.get("/me", requireAuth, (req,res)=>res.json({user:req.user}));
