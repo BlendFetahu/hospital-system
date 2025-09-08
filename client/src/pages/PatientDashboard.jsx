@@ -4,7 +4,7 @@ import api from "../api";
 
 const fmt = (v) => (v ? new Date(v).toLocaleString() : "");
 
-// 16 slote 30-min nga 08:00–16:00 (08:00, 08:30, …, 15:30)
+// 16 slots of 30 min from 08:00–16:00 (08:00, 08:30, …, 15:30)
 const ALL_SLOTS = (() => {
   const out = [];
   for (let h = 8; h < 16; h++) {
@@ -33,11 +33,11 @@ export default function PatientDashboard() {
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
 
-  // me & email paraplotësuar
+  // me & prefilled email
   const [me, setMe] = useState(null);
   const [email, setEmail] = useState("");
 
-  // fushat e pacientit (plotësohen manualisht nga përdoruesi)
+  // patient fields (manually filled by the user)
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName]   = useState("");
   const [dob, setDob]             = useState(""); // YYYY-MM-DD
@@ -63,7 +63,7 @@ export default function PatientDashboard() {
 
   const [creating, setCreating] = useState(false);
 
-  // historiku + kërkimi
+  // history + search
   const [appointments, setAppointments] = useState([]);
   const [q, setQ] = useState("");
   const filtered = useMemo(() => {
@@ -84,17 +84,30 @@ export default function PatientDashboard() {
     );
   }, [appointments, q]);
 
+  // logout
+  const [loggingOut, setLoggingOut] = useState(false);
+  async function handleLogout() {
+    try {
+      setLoggingOut(true);
+      try { await api.post("/logout"); } catch {}
+      try { localStorage.removeItem("token"); } catch {}
+      window.location.href = "/login";
+    } finally {
+      setLoggingOut(false);
+    }
+  }
+
   // initial load
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
 
-        // kush jam?
+        // who am I?
         const { data: meRes } = await api.get("/me");
         setMe(meRes.user);
 
-        // email paraplotësuar nga /patients/me ose /me
+        // prefill email from /patients/me or /me
         try {
           const { data: prof } = await api.get("/patients/me");
           setEmail(prof?.email || meRes?.user?.email || "");
@@ -102,11 +115,11 @@ export default function PatientDashboard() {
           setEmail(meRes?.user?.email || "");
         }
 
-        // lista e doktorëve (public search)
+        // doctors list (public search)
         const { data: docsRes } = await api.get("/doctors/search");
         setDoctors(Array.isArray(docsRes?.items) ? docsRes.items : []);
 
-        // historiku i takimeve të mia
+        // my appointments
         const { data: appts } = await api.get("/patients/me/appointments");
         setAppointments(Array.isArray(appts) ? appts : []);
         setErr("");
@@ -171,7 +184,7 @@ export default function PatientDashboard() {
           last_name : lastName || null,
           name      : fullName,
           dob       : dob || null,
-          email     : email || null, // paraplotësuar
+          email     : email || null, // prefilled
           phone     : phone || null,
           gender    : gender || null,
         },
@@ -179,19 +192,19 @@ export default function PatientDashboard() {
 
       await api.post("/appointments", payload);
 
-      // UI: hiq slotin menjëherë (opsionale)
+      // UI: optimistically mark the slot as taken
       setBooked((prev) => Array.from(new Set([...prev, selectedTime])));
       setSelectedTime("");
 
-      setOk("✅ Takimi u regjistrua me sukses.");
+      setOk("✅ Appointment saved successfully.");
 
-      // rifresko historikun
+      // refresh history
       const { data: appts } = await api.get("/patients/me/appointments");
       setAppointments(Array.isArray(appts) ? appts : []);
     } catch (e) {
       const s = e?.response?.status;
-      if (s === 409) setErr("Ky orar është i zënë për këtë doktor. Zgjidh një orar tjetër.");
-      else setErr(e?.response?.data?.message || "Nuk u ruajt takimi.");
+      if (s === 409) setErr("This timeslot is taken for this doctor. Please choose another time.");
+      else setErr(e?.response?.data?.message || "Could not save the appointment.");
     } finally {
       setCreating(false);
     }
@@ -213,29 +226,40 @@ export default function PatientDashboard() {
 
   return (
     <main className="min-h-screen">
-      {/* HERO me gradient + dekorime */}
+      {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-emerald-50 via-sky-50 to-white" />
         <div className="pointer-events-none absolute -top-16 -left-20 h-56 w-56 rounded-full bg-emerald-200/30 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -right-10 h-56 w-56 rounded-full bg-sky-200/30 blur-3xl" />
 
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10">
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/70 px-3 py-1 text-xs font-medium text-emerald-700 shadow-sm">
-            <span>🩺</span> Patient Dashboard
+          {/* Banner like the screenshot */}
+          <div className="rounded-2xl bg-gradient-to-r from-emerald-500 to-sky-600 text-white p-6 flex items-start justify-between shadow-sm">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                {me?.email || "Patient"}
+              </h1>
+              <p className="mt-1 text-sm/6 opacity-95">Patient Dashboard</p>
+              {me?.email ? <p className="text-sm/6 opacity-90">{me.email}</p> : null}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="rounded-lg bg-white/20 hover:bg-white/30 text-white px-4 py-2 text-sm font-medium border border-white/30 transition disabled:opacity-60"
+              title="Log out"
+              aria-label="Log out"
+            >
+              {loggingOut ? "Logging out…" : "Log out"}
+            </button>
           </div>
 
-          <h1 className="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
-            Përshëndetje{me?.email ? `, ${me.email}` : ""} 👋
-          </h1>
-          <p className="mt-2 text-slate-600">
-            Cakto një takim të ri, shiko historikun dhe menaxho oraret e tua – ditët e vikendit fshihen automatikisht.
-          </p>
-
-          {/* kartë e vogël e statusit */}
+          {/* Status toast */}
           {(err || ok) && (
             <div
               className={[
-                "mt-5 rounded-2xl px-4 py-3 text-sm shadow-sm border",
+                "mt-4 rounded-2xl px-4 py-3 text-sm shadow-sm border",
                 err
                   ? "border-rose-200 bg-rose-50 text-rose-700"
                   : "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -247,7 +271,7 @@ export default function PatientDashboard() {
         </div>
       </section>
 
-      {/* KONTEKST: pattern i lehtë pas seksioneve */}
+      {/* CONTENT */}
       <section className="relative">
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-[linear-gradient(135deg,#f0fdf4_25%,transparent_25%),linear-gradient(225deg,#f0fdf4_25%,transparent_25%),linear-gradient(45deg,#f0fdf4_25%,transparent_25%),linear-gradient(315deg,#f0fdf4_25%,#ffffff_25%)] bg-[length:40px_40px] opacity-40" />
@@ -256,75 +280,76 @@ export default function PatientDashboard() {
         </div>
 
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 space-y-10">
-          {/* Cakto takim */}
+          {/* Book appointment */}
           <section className="rounded-2xl border border-slate-200 bg-white/90 backdrop-blur p-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">Cakto një takim</h2>
+              <h2 className="text-lg font-semibold text-slate-900">Book an appointment</h2>
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-xs font-medium border border-emerald-200">
-                <span>📅</span> Orari: 08:00–16:00 (ditë pune)
+                <span>📅</span> Hours: 08:00–16:00 (weekdays)
               </span>
             </div>
             <p className="text-sm text-slate-600 mt-1">
-              Plotëso të dhënat dhe zgjidh një orar të lirë. Slotet e zëna fshihen automatikisht.
+              Fill in your details and pick a free timeslot. Booked slots are hidden automatically.
             </p>
 
             <form onSubmit={createAppointment} className="mt-5 space-y-6">
-              {/* 1) Të dhënat e pacientit */}
+              {/* 1) Patient details */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
                     1
                   </span>
-                  <h3 className="text-base font-semibold text-slate-900">Të dhënat e pacientit</h3>
+                  <h3 className="text-base font-semibold text-slate-900">Patient details</h3>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Emri</label>
+                    <label className="block text-sm font-medium text-slate-700">First name</label>
                     <input
                       type="text"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
-                      placeholder="p.sh. Ardit"
+                      className="mt-1 w-full h-11 rounded-xl border border-slate-300 px-3 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
+                      placeholder="e.g. John"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Mbiemri</label>
+                    <label className="block text-sm font-medium text-slate-700">Last name</label>
                     <input
                       type="text"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
-                      placeholder="p.sh. Krasniqi"
+                      className="mt-1 w-full h-11 rounded-xl border border-slate-300 px-3 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
+                      placeholder="e.g. Smith"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-5">
+                {/* Expanded & aligned nicely */}
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Datëlindja</label>
+                    <label className="block text-sm font-medium text-slate-700">Date of birth</label>
                     <input
                       type="date"
                       value={dob}
                       onChange={(e) => setDob(e.target.value)}
-                      className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
+                      className="mt-1 w-full h-11 rounded-xl border border-slate-300 px-3 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Gjinia</label>
+                    <label className="block text-sm font-medium text-slate-700">Gender</label>
                     <select
                       value={gender}
                       onChange={(e) => setGender(e.target.value)}
-                      className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
+                      className="mt-1 w-full h-11 rounded-xl border border-slate-300 px-3 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
                     >
                       <option value="">—</option>
-                      <option value="Male">Mashkull</option>
-                      <option value="Female">Femër</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
                     </select>
                   </div>
                 </div>
@@ -336,44 +361,44 @@ export default function PatientDashboard() {
                       type="email"
                       value={email}
                       disabled
-                      className="mt-1 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm"
-                      placeholder="pacienti@example.com"
+                      className="mt-1 w-full h-11 rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm"
+                      placeholder="patient@example.com"
                     />
-                    <p className="mt-1 text-[11px] text-slate-500">Paraplotësuar nga llogaria juaj.</p>
+                    <p className="mt-1 text-[11px] text-slate-500">Prefilled from your account.</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Telefoni</label>
+                    <label className="block text-sm font-medium text-slate-700">Phone</label>
                     <input
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
+                      className="mt-1 w-full h-11 rounded-xl border border-slate-300 px-3 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
                       placeholder="+383 xx xxx xxx"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* 2) Orari i takimit */}
+              {/* 2) Appointment time */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
                     2
                   </span>
-                  <h3 className="text-base font-semibold text-slate-900">Orari i takimit</h3>
+                  <h3 className="text-base font-semibold text-slate-900">Appointment time</h3>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Doktori</label>
+                    <label className="block text-sm font-medium text-slate-700">Doctor</label>
                     <select
                       value={selectedDoctorId}
                       onChange={(e) => setSelectedDoctorId(e.target.value)}
-                      className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
+                      className="mt-1 w-full h-11 rounded-xl border border-slate-300 px-3 text-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
                       required
                     >
-                      <option value="">— Zgjidh doktorin —</option>
+                      <option value="">— Select a doctor —</option>
                       {doctors.map((d) => (
                         <option key={d.id} value={d.id}>
                           {d.name || `Doctor #${d.id}`} {d.specialty ? `• ${d.specialty}` : ""}{" "}
@@ -381,40 +406,40 @@ export default function PatientDashboard() {
                         </option>
                       ))}
                     </select>
-                    <p className="mt-1 text-[11px] text-slate-500">Zgjidh doktorin e dëshiruar.</p>
+                    <p className="mt-1 text-[11px] text-slate-500">Choose the doctor you prefer.</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Data</label>
+                    <label className="block text-sm font-medium text-slate-700">Date</label>
                     <input
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
-                      className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
+                      className="mt-1 w-full h-11 rounded-xl border border-slate-300 px-3 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
                       required
                     />
-                    <p className="mt-1 text-[11px] text-slate-500">Vlen vetëm për ditë pune.</p>
+                    <p className="mt-1 text-[11px] text-slate-500">Weekdays only.</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700">Arsye (opsionale)</label>
+                    <label className="block text-sm font-medium text-slate-700">Reason (optional)</label>
                     <input
                       type="text"
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
-                      className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
-                      placeholder="p.sh. kontroll rutinë"
+                      className="mt-1 w-full h-11 rounded-xl border border-slate-300 px-3 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
+                      placeholder="e.g. routine check"
                     />
                   </div>
                 </div>
 
-                {/* Slote – FSHIH në vikend */}
+                {/* Slots – HIDE on weekends */}
                 {!date || isWeekend(date) ? null : (
                   <div className="mt-4">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Zgjidh orarin</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Choose a time</label>
 
                     {availableSlots.length === 0 ? (
-                      <div className="text-sm text-rose-600">S’ka orare të lira në këtë ditë.</div>
+                      <div className="text-sm text-rose-600">No free timeslots that day.</div>
                     ) : (
                       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
                         {availableSlots.map((t) => {
@@ -441,7 +466,7 @@ export default function PatientDashboard() {
 
                     {selectedTime && (
                       <p className="mt-2 text-xs text-emerald-700">
-                        Do të rezervohet: <b>{date}</b> në <b>{selectedTime}</b>
+                        Will be booked: <b>{date}</b> at <b>{selectedTime}</b>
                       </p>
                     )}
                   </div>
@@ -461,31 +486,27 @@ export default function PatientDashboard() {
                     creating
                   }
                   className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2.5 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700 active:scale-[.99] disabled:opacity-60"
-                  title="Plotëso Emër/Mbiemër, zgjidh doktorin, ditë pune dhe orar"
+                  title="Fill first/last name, select doctor, weekday and time"
                 >
-                  {creating ? "Duke ruajtur…" : "Cakto termin"}
+                  {creating ? "Saving…" : "Book appointment"}
                 </button>
-
-                <span className="ml-auto text-[11px] text-slate-500">
-                  🔒 Të dhënat ruhen në mënyrë të sigurt sipas politikave të projektit.
-                </span>
               </div>
             </form>
           </section>
 
-          {/* Takimet e mia */}
+          {/* My appointments */}
           <section className="rounded-2xl border border-slate-200 bg-white/90 backdrop-blur p-6 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🗂️</span>
-                <h2 className="text-lg font-semibold text-slate-900">Takimet e mia</h2>
+                <h2 className="text-lg font-semibold text-slate-900">My appointments</h2>
               </div>
               <input
                 type="text"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Kërko (doktor, status, arsye, datë)…"
-                className="w-72 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
+                placeholder="Search (doctor, status, reason, date)…"
+                className="w-72 h-11 rounded-xl border border-slate-300 px-3 text-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
               />
             </div>
 
@@ -493,10 +514,10 @@ export default function PatientDashboard() {
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="text-left text-slate-600">
-                    <th className="py-2 pr-4">Data & Ora</th>
-                    <th className="py-2 pr-4">Doktori</th>
+                    <th className="py-2 pr-4">Date & Time</th>
+                    <th className="py-2 pr-4">Doctor</th>
                     <th className="py-2 pr-4">Status</th>
-                    <th className="py-2 pr-4">Arsye</th>
+                    <th className="py-2 pr-4">Reason</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -540,7 +561,7 @@ export default function PatientDashboard() {
                   {filtered.length === 0 && (
                     <tr>
                       <td className="py-6 text-slate-500" colSpan={4}>
-                        S’ka të dhëna.
+                        No data.
                       </td>
                     </tr>
                   )}
@@ -553,3 +574,4 @@ export default function PatientDashboard() {
     </main>
   );
 }
+
