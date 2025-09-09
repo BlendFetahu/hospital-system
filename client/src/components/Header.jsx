@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
-  const loc = useLocation(); // ➜ SHTUAR: ndjek ndryshimin e rutës
+  const loc = useLocation();
 
   // ---- Auth (minimal & reaktiv) ----
   const getToken = () =>
@@ -24,7 +24,7 @@ export default function Header() {
     };
   }, []);
 
-  // ➜ SHTUAR: rifresko kur ndryshon ruta (p.sh. pas login -> dashboard)
+  
   useEffect(() => {
     setIsAuthed(!!getToken());
   }, [loc]); 

@@ -183,10 +183,10 @@ function CTASection() {
             </p>
           </div>
           <div className="flex items-center justify-end gap-3">
-            <a href="/appointments" className="rounded-xl bg-white px-5 py-3 font-semibold text-emerald-700 shadow hover:bg-emerald-50">
+            <a href="/search" className="rounded-xl bg-white px-5 py-3 font-semibold text-emerald-700 shadow hover:bg-emerald-50">
               Book online
             </a>
-            <a href="tel:+381000000" className="rounded-xl bg-emerald-900/40 px-5 py-3 font-semibold text-white ring-1 ring-white/40 hover:bg-emerald-900/60">
+            <a href="tel:+38344123456" className="rounded-xl bg-emerald-900/40 px-5 py-3 font-semibold text-white ring-1 ring-white/40 hover:bg-emerald-900/60">
               +383 44 123 456
             </a>
           </div>
