@@ -178,36 +178,31 @@ export default function AppointmentNew() {
           </p>
 
           {/* info card e doktorit */}
-<div className="mt-5 rounded-2xl border border-emerald-100 bg-white/80 backdrop-blur px-4 py-4 sm:px-6 shadow-sm">
-  <div className="flex items-center gap-4">
-    {/* Avatar me inicialet (jo foto) */}
-    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-sky-500 text-white font-bold shadow">
-      {initials(doctor?.name)}
-    </div>
-
-    <div className="min-w-0">
-      <p className="truncate font-semibold text-slate-900">
-        {doctor?.name ?? "—"}
-      </p>
-      <p className="truncate text-sm text-slate-600">
-        {doctor?.specialty ? `Specialty: ${doctor.specialty}` : "—"}
-        {doctor?.city ? ` • ${doctor.city}` : ""}
-      </p>
-    </div>
-
-    <div className="ml-auto">
-      <Link
-        to="/search"
-        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50"
-      >
-        ⟵ Kthehu te kërkimi
-      </Link>
-    </div>
-  </div>
-
-  {docErr && <p className="mt-2 text-xs text-rose-600">{docErr}</p>}
-</div>
-
+          <div className="mt-5 rounded-2xl border border-emerald-100 bg-white/80 backdrop-blur px-4 py-4 sm:px-6 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-emerald-500 to-sky-500 text-white font-bold">
+                {initials(doctor?.name)}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-slate-900">
+                  {doctor?.name ?? "—"}
+                </p>
+                <p className="truncate text-sm text-slate-600">
+                  {doctor?.specialty ? `Specialty: ${doctor.specialty}` : "—"}
+                  {doctor?.city ? ` • ${doctor.city}` : ""}
+                </p>
+              </div>
+              <div className="ml-auto">
+                <Link
+                  to="/search"
+                  className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50"
+                >
+                  ⟵ Kthehu te kërkimi
+                </Link>
+              </div>
+            </div>
+            {docErr && <p className="mt-2 text-xs text-rose-600">{docErr}</p>}
+          </div>
         </div>
       </section>
 

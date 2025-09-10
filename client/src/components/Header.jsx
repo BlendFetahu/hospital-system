@@ -1,3 +1,4 @@
+// client/src/components/Header.jsx
 import { useState, useEffect } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 
@@ -5,17 +6,26 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const loc = useLocation();
 
-  // ---- Auth (minimal & reaktiv) ----
-  const getToken = () =>
-    localStorage.getItem("token") ||
-    localStorage.getItem("jwt") ||
-    localStorage.getItem("accessToken") ||
-    localStorage.getItem("auth");
+  // kontrollon edhe çelësat me prefiks "auth:"
+  const isLoggedIn = () => {
+    const at =
+      localStorage.getItem("auth:accessToken") ||
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("token") ||
+      localStorage.getItem("jwt") ||
+      localStorage.getItem("auth");
+    const rt =
+      localStorage.getItem("auth:refreshToken") ||
+      localStorage.getItem("refreshToken");
+    const u = localStorage.getItem("auth:user") || localStorage.getItem("user");
+    const hasUser = u && u !== "null" && u !== "undefined";
+    return Boolean(at || rt || hasUser);
+  };
 
-  const [isAuthed, setIsAuthed] = useState(!!getToken());
+  const [isAuthed, setIsAuthed] = useState(isLoggedIn());
 
   useEffect(() => {
-    const sync = () => setIsAuthed(!!getToken());
+    const sync = () => setIsAuthed(isLoggedIn());
     window.addEventListener("storage", sync);
     window.addEventListener("auth-changed", sync);
     return () => {
@@ -24,10 +34,9 @@ export default function Header() {
     };
   }, []);
 
-  
   useEffect(() => {
-    setIsAuthed(!!getToken());
-  }, [loc]); 
+    setIsAuthed(isLoggedIn());
+  }, [loc.pathname]);
 
   const NAV = [
     ["Home", "/"],
@@ -40,7 +49,6 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-transparent">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <nav className="my-4 flex items-center justify-between rounded-full bg-white px-4 py-2 ring-1 ring-slate-200 shadow-sm">
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-full bg-gradient-to-r from-blue-600 to-teal-500 shadow flex items-center justify-center">
               <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -50,7 +58,6 @@ export default function Header() {
             <span className="font-semibold text-slate-800">Hospital System</span>
           </Link>
 
-          {/* Desktop menu */}
           <ul className="hidden md:flex items-center gap-6 text-sm text-slate-600">
             {NAV.map(([label, to]) => (
               <li key={label}>
@@ -61,7 +68,6 @@ export default function Header() {
             ))}
           </ul>
 
-          {/* Desktop auth */}
           {!isAuthed && (
             <div className="hidden md:flex items-center gap-2">
               <Link to="/login" className="rounded-full px-4 py-2 text-sm text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50">
@@ -73,7 +79,6 @@ export default function Header() {
             </div>
           )}
 
-          {/* Mobile hamburger */}
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
@@ -93,7 +98,6 @@ export default function Header() {
           </button>
         </nav>
 
-        {/* Mobile panel */}
         <div className={`md:hidden overflow-hidden transition-[max-height] duration-300 ${open ? "max-h-96" : "max-h-0"}`}>
           <div className="rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm px-4 py-3 mb-4">
             <ul className="flex flex-col gap-3 text-slate-700">
@@ -106,7 +110,6 @@ export default function Header() {
               ))}
             </ul>
 
-            {/* Mobile auth */}
             {!isAuthed && (
               <div className="mt-4 flex gap-2">
                 <Link to="/login" onClick={() => setOpen(false)} className="flex-1 rounded-full px-4 py-2 text-sm text-slate-700 ring-1 ring-slate-200 text-center hover:bg-slate-50">

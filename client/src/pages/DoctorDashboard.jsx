@@ -1,6 +1,9 @@
 // client/src/pages/DoctorDashboard.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getAccessToken, getUser } from "../auth";
+import useLogout from "../hooks/useLogout";
+
 
 import DashboardHeader from "../components/DoctorD/DashboardHeader.jsx";
 import StatsRow from "../components/DoctorD/StatsRow.jsx";
@@ -10,10 +13,10 @@ import DiagnosesTab from "../components/DoctorD/DiagnosesTab.jsx";
 import Tab from "../components/DoctorD/Tab.jsx";
 
 import api from "../api";
-import { getRole, logout } from "../auth";
 
 export default function DoctorDashboard() {
   const navigate = useNavigate();
+  const logout = useLogout();
 
   // ---- Me (doctor) ----
   const [me, setMe] = useState(null);
@@ -49,11 +52,13 @@ export default function DoctorDashboard() {
   // ---- Guard + initial load ----
   useEffect(() => {
     async function run() {
-      const role = getRole();
-      if (role !== "DOCTOR") {
-        navigate("/login", { replace: true });
-        return;
-      }
+       const hasAT = !!getAccessToken();
+        const role = (getUser()?.role || "").toUpperCase();
+        if (!hasAT || role !== "DOCTOR") {
+          navigate("/login", { replace: true });
+          return;
+        }
+
       try {
         // kush jam?
         const meRes = await api.get("/me");
