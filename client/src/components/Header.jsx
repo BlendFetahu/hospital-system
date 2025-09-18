@@ -55,7 +55,7 @@ export default function Header() {
                 <polyline points="4 12 8 12 10 7 14 17 16 12 20 12" />
               </svg>
             </div>
-            <span className="font-semibold text-slate-800">Hospital System</span>
+            <span className="font-semibold text-slate-800">HealthPoint</span>
           </Link>
 
           <ul className="hidden md:flex items-center gap-6 text-sm text-slate-600">

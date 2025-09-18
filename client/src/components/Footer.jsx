@@ -28,7 +28,7 @@ export default function Footer() {
                   <path d="M22 8l-10 7L2 8" />
                 </svg>
                 <span className="text-gray-900 font-medium group-hover:text-blue-600 transition-colors">
-                  support@hospital.com
+                  healthpoint@gmail.com
                 </span>
               </a>
 
@@ -54,13 +54,13 @@ export default function Footer() {
             </svg>
           </div>
           <span className="text-2xl font-bold tracking-tight text-gray-900">
-            Hospital System
+            HealthPoint
           </span>
         </a>
 
         {/* COPYRIGHT */}
         <p className="text-sm text-gray-600 text-center sm:text-right">
-          © {new Date().getFullYear()} Hospital System. All Rights Reserved.
+          © {new Date().getFullYear()} HealthPoint. All Rights Reserved.
         </p>
       </div>
     </footer>
