@@ -9,7 +9,7 @@ function initials(name) {
   return parts.map((p) => p[0]?.toUpperCase() || "").join("") || "DR";
 }
 
-// 16 slote 30-min nga 08:00–16:00 (08:00, 08:30, …, 15:30)
+// 16 slots, 30-min each, from 08:00–16:00 (08:00, 08:30, …, 15:30)
 const ALL_SLOTS = (() => {
   const out = [];
   for (let h = 8; h < 16; h++) {
@@ -57,11 +57,11 @@ export default function AppointmentNew() {
       .then((res) => {
         const item = res.data?.item || null;
         setDoctor(item);
-        if (!item) setDocErr("Doktori nuk u gjet.");
+        if (!item) setDocErr("Doctor not found.");
       })
       .catch(() => {
         setDoctor(null);
-        setDocErr("S'mora të dhënat e doktorit.");
+        setDocErr("Could not fetch doctor data.");
       })
       .finally(() => setDocLoading(false));
   }, [doctorId]);
@@ -80,9 +80,9 @@ export default function AppointmentNew() {
   }, [firstName, lastName]);
 
   // schedule
-  const [date, setDate] = useState("");                // "YYYY-MM-DD"
-  const [booked, setBooked] = useState([]);            // ["08:30","09:00",...]
-  const [selectedTime, setSelectedTime] = useState(""); // "HH:mm"
+  const [date, setDate] = useState("");                
+  const [booked, setBooked] = useState([]);            
+  const [selectedTime, setSelectedTime] = useState(""); 
 
   const availableSlots = useMemo(
     () => ALL_SLOTS.filter((t) => !booked.includes(t)),
@@ -94,7 +94,7 @@ export default function AppointmentNew() {
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
 
-  // kur ndryshon data/doctor: rifresko slotet e zëna; mos kërko fare në vikend
+  // when doctor/date changes: refresh booked slots; skip weekends
   useEffect(() => {
     setSelectedTime("");
     if (!doctorId || !date || isWeekend(date)) {
@@ -123,7 +123,6 @@ export default function AppointmentNew() {
     setErr("");
     setOk("");
 
-    // siguria në frontend (pa mesazhe për vikend – thjesht mos lejo submit)
     if (!canSubmit) return;
 
     setSubmitting(true);
@@ -133,7 +132,7 @@ export default function AppointmentNew() {
       const payload = {
         doctor_id: Number(doctorId),
         scheduled_at: scheduled,
-        reason: null, // mund ta kthesh në input nëse do
+        reason: null,
         patient: {
           first_name: firstName || null,
           last_name: lastName || null,
@@ -146,12 +145,12 @@ export default function AppointmentNew() {
       };
 
       await api.post("/appointments", payload);
-      setOk("Takimi u regjistrua me sukses.");
+      setOk("Appointment saved successfully.");
       navigate("/search");
     } catch (e) {
       const s = e?.response?.status;
-      if (s === 409) setErr("Ky orar është i zënë për këtë doktor. Zgjidh një orar tjetër.");
-      else setErr(e?.response?.data?.message || "Nuk u ruajt takimi. Kontrollo fushat ose provo përsëri.");
+      if (s === 409) setErr("This time is already booked for this doctor. Please select another slot.");
+      else setErr(e?.response?.data?.message || "Could not save appointment. Please check fields or try again.");
     } finally {
       setSubmitting(false);
     }
@@ -171,13 +170,13 @@ export default function AppointmentNew() {
           </div>
 
           <h1 className="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
-            Cakto takim
+            Book Appointment
           </h1>
           <p className="mt-2 text-slate-600">
-            {docLoading ? "Po ngarkoj të dhënat e doktorit…" : "Plotëso të dhënat dhe zgjidh një orar të lirë (vetëm ditë pune)."}
+            {docLoading ? "Loading doctor data…" : "Fill in patient information and select a free time slot (weekdays only)."}
           </p>
 
-          {/* info card e doktorit */}
+          {/* Doctor info card */}
           <div className="mt-5 rounded-2xl border border-emerald-100 bg-white/80 backdrop-blur px-4 py-4 sm:px-6 shadow-sm">
             <div className="flex items-center gap-4">
               <div className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-emerald-500 to-sky-500 text-white font-bold">
@@ -197,7 +196,7 @@ export default function AppointmentNew() {
                   to="/search"
                   className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50"
                 >
-                  ⟵ Kthehu te kërkimi
+                  ⟵ Back to Search
                 </Link>
               </div>
             </div>
@@ -206,9 +205,9 @@ export default function AppointmentNew() {
         </div>
       </section>
 
-      {/* FORMA */}
+      {/* FORM */}
       <section className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pb-16">
-        {/* dekor */}
+        {/* decoration */}
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-[linear-gradient(135deg,#f0fdf4_25%,transparent_25%),linear-gradient(225deg,#f0fdf4_25%,transparent_25%),linear-gradient(45deg,#f0fdf4_25%,transparent_25%),linear-gradient(315deg,#f0fdf4_25%,#ffffff_25%)] bg-[length:40px_40px] opacity-40" />
           <div className="absolute -top-40 -left-32 h-80 w-80 rounded-full bg-emerald-200/30 blur-3xl" />
@@ -230,44 +229,44 @@ export default function AppointmentNew() {
           onSubmit={onSubmit}
           className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
         >
-          {/* 1) Të dhënat e pacientit */}
+          {/* 1) Patient Information */}
           <div className="flex items-center gap-2">
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
               1
             </span>
-            <h2 className="text-lg font-semibold text-slate-900">Të dhënat e pacientit</h2>
+            <h2 className="text-lg font-semibold text-slate-900">Patient Information</h2>
           </div>
 
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-medium text-slate-700">Emri</label>
+              <label className="block text-sm font-medium text-slate-700">First Name</label>
               <input
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
-                placeholder="p.sh. Ardit"
+                placeholder="e.g. John"
                 required
               />
-              <p className="mt-1 text-[11px] text-slate-500">Shkruani emrin ligjor të pacientit.</p>
+              <p className="mt-1 text-[11px] text-slate-500">Enter the patient’s legal first name.</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700">Mbiemri</label>
+              <label className="block text-sm font-medium text-slate-700">Last Name</label>
               <input
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
-                placeholder="p.sh. Krasniqi"
+                placeholder="e.g. Smith"
                 required
               />
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-medium text-slate-700">Datëlindja</label>
+              <label className="block text-sm font-medium text-slate-700">Date of Birth</label>
               <input
                 type="date"
                 value={dob}
@@ -277,15 +276,15 @@ export default function AppointmentNew() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700">Gjinia</label>
+              <label className="block text-sm font-medium text-slate-700">Gender</label>
               <select
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
               >
                 <option value="">—</option>
-                <option value="Male">Mashkull</option>
-                <option value="Female">Femër</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
               </select>
             </div>
           </div>
@@ -298,13 +297,13 @@ export default function AppointmentNew() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-emerald-500 focus:ring focus:ring-emerald-200"
-                placeholder="p.sh. pacienti@example.com"
+                placeholder="e.g. patient@example.com"
               />
-              <p className="mt-1 text-[11px] text-slate-500">Përdoret për njoftimet e takimit.</p>
+              <p className="mt-1 text-[11px] text-slate-500">Used for appointment notifications.</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700">Telefoni</label>
+              <label className="block text-sm font-medium text-slate-700">Phone</label>
               <input
                 type="tel"
                 value={phone}
@@ -317,21 +316,20 @@ export default function AppointmentNew() {
 
           {fullName && (
             <p className="mt-3 text-xs text-slate-500">
-              Emri i plotë që do ruhet: <b>{fullName}</b>
+              Full name to be saved: <b>{fullName}</b>
             </p>
           )}
 
-          {/* 2) Orari i takimit */}
+          {/* 2) Appointment Time */}
           <div className="mt-8 flex items-center gap-2">
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
               2
             </span>
-            <h2 className="text-lg font-semibold text-slate-900">Orari i takimit</h2>
+            <h2 className="text-lg font-semibold text-slate-900">Appointment Time</h2>
           </div>
 
-          {/* Data (nuk shfaqim asnjë mesazh në vikend; thjesht nuk renderojmë slote) */}
           <div className="mt-4">
-            <label className="block text-sm font-medium text-slate-700">Data</label>
+            <label className="block text-sm font-medium text-slate-700">Date</label>
             <input
               type="date"
               value={date}
@@ -341,13 +339,12 @@ export default function AppointmentNew() {
             />
           </div>
 
-          {/* Slote të lira – FSHIH krejt seksionin nëse është vikend */}
           {!date || isWeekend(date) ? null : (
             <div className="mt-4">
-              <label className="block text-sm font-medium text-slate-700 mb-2">Zgjidh orarin</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Select Time</label>
 
               {availableSlots.length === 0 ? (
-                <div className="text-sm text-rose-600">S’ka orare të lira në këtë ditë.</div>
+                <div className="text-sm text-rose-600">No available slots on this day.</div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
                   {availableSlots.map((t) => {
@@ -374,7 +371,7 @@ export default function AppointmentNew() {
 
               {selectedTime && (
                 <p className="mt-2 text-xs text-emerald-700">
-                  Do të rezervohet: <b>{date}</b> në <b>{selectedTime}</b>
+                  Appointment will be reserved on <b>{date}</b> at <b>{selectedTime}</b>
                 </p>
               )}
             </div>
@@ -385,9 +382,9 @@ export default function AppointmentNew() {
               type="submit"
               disabled={!canSubmit}
               className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2.5 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700 active:scale-[.99] disabled:opacity-60"
-              title={!canSubmit ? "Zgjidh një ditë pune dhe orar të lirë" : undefined}
+              title={!canSubmit ? "Select a weekday and free time slot" : undefined}
             >
-              {submitting ? "Duke ruajtur…" : "Ruaj takimin"}
+              {submitting ? "Saving…" : "Save Appointment"}
             </button>
 
             <button
@@ -395,11 +392,11 @@ export default function AppointmentNew() {
               onClick={() => navigate(-1)}
               className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              Anulo
+              Cancel
             </button>
 
             <span className="ml-auto text-[11px] text-slate-500">
-              🔒 Të dhënat ruhen në mënyrë të sigurt sipas politikave të projektit.
+              🔒 Data is securely stored according to project policies.
             </span>
           </div>
         </form>
