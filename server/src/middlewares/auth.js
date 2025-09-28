@@ -1,4 +1,5 @@
-const jwt = require("jsonwebtoken");
+// server/src/middlewares/auth.js
+const { verifyAccess } = require("../utils/tokens");
 
 function requireAuth(req, res, next) {
   const h = req.headers.authorization || "";
@@ -6,11 +7,15 @@ function requireAuth(req, res, next) {
   if (!token) return res.status(401).json({ message: "No token" });
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    // normalizo rolin në uppercase që këtu
-    req.user = { ...payload, role: (payload.role || "").toUpperCase() };
+    const payload = verifyAccess(token); // <-- përdor ACCESS_SECRET
+    // normalizo rolin në uppercase
+    req.user = {
+      id: payload.sub,
+      email: payload.email,
+      role: (payload.role || "").toUpperCase(),
+    };
     next();
-  } catch (e) {
+  } catch {
     return res.status(401).json({ message: "Invalid token" });
   }
 }

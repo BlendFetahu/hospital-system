@@ -396,7 +396,7 @@ export default function AppointmentNew() {
             </button>
 
             <span className="ml-auto text-[11px] text-slate-500">
-              🔒 Data is securely stored according to project policies.
+              🔒 Të dhënat ruhen në mënyrë të sigurt sipas politikave të projektit.
             </span>
           </div>
         </form>

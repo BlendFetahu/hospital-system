@@ -2,25 +2,29 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api, { getDoctors, createDoctor, getPatients, deletePatient, deleteDoctor } from "../api";
-import { getRole, logout } from "../auth";
+import { getAccessToken, getUser } from "../auth";
+import useLogout from "../hooks/useLogout";
 import ConfirmModal from "../components/common/ConfirmModal.jsx";
 import { SPECIALTY_OPTIONS } from "../constants/specialties";
 
 
 export default function AdminDashboard() {
+  const logout = useLogout();
   const navigate = useNavigate();
 
   const [me, setMe] = useState(null);
   const [checking, setChecking] = useState(true);
 
-  // ===== Guard + info e loguar (përdor getRole nga JWT) =====
+ 
   useEffect(() => {
     async function run() {
-      const role = getRole();
-      if (role !== "ADMIN") {
+      const hasAT = !!getAccessToken();
+      const role = (getUser()?.role || "").toUpperCase();
+      if (!hasAT || role !== "ADMIN") {
         navigate("/login", { replace: true });
         return;
       }
+
       try {
         const res = await api.get("/me");
         setMe(res.data.user);
@@ -64,6 +68,7 @@ export default function AdminDashboard() {
     const res = await getPatients({ search, page: 1, limit: 50 });
     setPatients(toItems(res));
   }
+
 
   useEffect(() => {
     let cancelled = false;
@@ -143,11 +148,11 @@ export default function AdminDashboard() {
                 </p>
               </div>
               <button
-                onClick={logout}
-                className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg"
-              >
-                Log out
-              </button>
+                  onClick={logout}
+                  className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg"
+                >
+                  Log out
+                </button>
             </div>
           </div>
 

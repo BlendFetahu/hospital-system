@@ -20,15 +20,7 @@ export default function About() {
               same-day appointments to modern diagnostics, our team is here to make healthcare
               simple, accessible, and human.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                to="/staff"
-                className="rounded-full bg-white px-6 py-3 font-semibold text-emerald-700 shadow hover:bg-emerald-50"
-              >
-                Meet Our Staff
-              </Link>
-              
-            </div>
+           
           </div>
         </div>
       </section>
@@ -163,10 +155,10 @@ export default function About() {
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
-                to="/staff"
+                to="/search"
                 className="rounded-full bg-white px-6 py-3 font-semibold text-emerald-700 shadow hover:bg-emerald-50"
               >
-                Meet Our Staff
+                Choose Your Specialist
               </Link>
              
             </div>

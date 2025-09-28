@@ -1,6 +1,9 @@
 // client/src/pages/PatientDashboard.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import api from "../api";
+import useLogout from "../hooks/useLogout";
+import { getAccessToken, getUser } from "../auth";
+import { useNavigate } from "react-router-dom";
 
 const fmt = (v) => (v ? new Date(v).toLocaleString() : "");
 
@@ -29,6 +32,9 @@ function toMySQLFromParts(dateStr, hhmm) {
 }
 
 export default function PatientDashboard() {
+  const logout = useLogout();
+  const navigate = useNavigate();
+
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
@@ -84,18 +90,15 @@ export default function PatientDashboard() {
     );
   }, [appointments, q]);
 
-  // logout
-  const [loggingOut, setLoggingOut] = useState(false);
-  async function handleLogout() {
-    try {
-      setLoggingOut(true);
-      try { await api.post("/logout"); } catch {}
-      try { localStorage.removeItem("token"); } catch {}
-      window.location.href = "/login";
-    } finally {
-      setLoggingOut(false);
-    }
-  }
+
+    useEffect(() => {
+    const hasAT = !!getAccessToken();
+    const role = (getUser()?.role || "").toUpperCase();
+     if (!hasAT || role !== "PATIENT") {
+      navigate("/login", { replace: true });
+     }
+    }, [navigate]);
+
 
   // initial load
   useEffect(() => {
@@ -245,13 +248,12 @@ export default function PatientDashboard() {
 
             <button
               type="button"
-              onClick={handleLogout}
-              disabled={loggingOut}
+              onClick={logout}
               className="rounded-lg bg-white/20 hover:bg-white/30 text-white px-4 py-2 text-sm font-medium border border-white/30 transition disabled:opacity-60"
               title="Log out"
               aria-label="Log out"
             >
-              {loggingOut ? "Logging out…" : "Log out"}
+              Log out
             </button>
           </div>
 

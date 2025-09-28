@@ -15,7 +15,8 @@ export default function LoginPage() {
     setErr("");
     try {
       const { data } = await api.post("/auth/login", { email, password });
-      setAuth(data.token, data.user);
+      setAuth(data.accessToken, data.refreshToken, data.user);
+      window.dispatchEvent(new Event("auth-changed"));
 
       switch ((data.user?.role || "").toUpperCase()) {
         case "ADMIN":  navigate("/admin");  break;
