@@ -2,11 +2,36 @@
 import { useState, useEffect } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 
+  // === helpers per auth/role ===
+const parseUser = () => {
+  const raw = localStorage.getItem("auth:user") || localStorage.getItem("user");
+  if (!raw || raw === "null" || raw === "undefined") return null;
+  try { return JSON.parse(raw); } catch { return null; }
+};
+
+const getRole = () => {
+  const u = parseUser();
+  return u?.role || null; 
+};
+
+const dashboardPathFor = (role) => {
+  switch (role) {
+    case "ADMIN":  return "/admin/dashboard";
+    case "DOCTOR": return "/doctor/dashboard";
+    case "PATIENT":return "/patient/dashboard";
+    default:       return "/dashboard"; 
+  }
+};
+
 export default function Header() {
   const [open, setOpen] = useState(false);
   const loc = useLocation();
+  const [role, setRole] = useState(
+    () => (getRole() ? getRole().toUpperCase() : null)
+  );
 
-  // kontrollon edhe çelësat me prefiks "auth:"
+
+  // kontrollon edhe çelesat me prefiks "auth:"
   const isLoggedIn = () => {
     const at =
       localStorage.getItem("auth:accessToken") ||
@@ -24,19 +49,27 @@ export default function Header() {
 
   const [isAuthed, setIsAuthed] = useState(isLoggedIn());
 
-  useEffect(() => {
-    const sync = () => setIsAuthed(isLoggedIn());
-    window.addEventListener("storage", sync);
-    window.addEventListener("auth-changed", sync);
-    return () => {
-      window.removeEventListener("storage", sync);
-      window.removeEventListener("auth-changed", sync);
-    };
-  }, []);
+    useEffect(() => {
+      const sync = () => {
+        setIsAuthed(isLoggedIn());
+        const r = getRole();
+        setRole(r ? r.toUpperCase() : null);
+      };
+      window.addEventListener("storage", sync);
+      window.addEventListener("auth-changed", sync);
+      return () => {
+        window.removeEventListener("storage", sync);
+        window.removeEventListener("auth-changed", sync);
+      };
+    }, []);
+
 
   useEffect(() => {
-    setIsAuthed(isLoggedIn());
-  }, [loc.pathname]);
+  setIsAuthed(isLoggedIn());
+  const r = getRole();
+  setRole(r ? r.toUpperCase() : null);
+}, [loc.pathname]);
+
 
   const NAV = [
     ["Home", "/"],
@@ -68,7 +101,16 @@ export default function Header() {
             ))}
           </ul>
 
-          {!isAuthed && (
+          {isAuthed ? (
+            <div className="hidden md:flex items-center gap-2">
+              <Link
+                to={dashboardPathFor(role)}
+                className="rounded-full bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-600"
+              >
+                Dashboard
+              </Link>
+            </div>
+          ) : (
             <div className="hidden md:flex items-center gap-2">
               <Link to="/login" className="rounded-full px-4 py-2 text-sm text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50">
                 Sign in
@@ -78,6 +120,7 @@ export default function Header() {
               </Link>
             </div>
           )}
+
 
           <button
             type="button"
@@ -110,7 +153,17 @@ export default function Header() {
               ))}
             </ul>
 
-            {!isAuthed && (
+            {isAuthed ? (
+              <div className="mt-4 flex gap-2">
+                <Link
+                  to={dashboardPathFor(role)}
+                  onClick={() => setOpen(false)}
+                  className="flex-1 rounded-full bg-teal-500 px-4 py-2 text-sm font-semibold text-white text-center hover:bg-teal-600"
+                >
+                  Dashboard
+                </Link>
+              </div>
+            ) : (
               <div className="mt-4 flex gap-2">
                 <Link to="/login" onClick={() => setOpen(false)} className="flex-1 rounded-full px-4 py-2 text-sm text-slate-700 ring-1 ring-slate-200 text-center hover:bg-slate-50">
                   Sign in
@@ -120,6 +173,7 @@ export default function Header() {
                 </Link>
               </div>
             )}
+
           </div>
         </div>
       </div>
